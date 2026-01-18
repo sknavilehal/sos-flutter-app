@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
+import '../core/providers/location_provider.dart';
 
 /// Home screen with location display and SOS button
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  String _currentLocation = 'Detecting location...';
-
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
-  }
-
-  void _getCurrentLocation() {
-    // TODO: Implement actual location detection
-    setState(() {
-      _currentLocation = 'Indiranagar, Bangalore';
-    });
+    // Location is now handled by LocationStateNotifier
   }
 
   @override
@@ -95,22 +88,117 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: AppConstants.brandBodySpacing),
               
               // Location
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    color: AppTheme.textSecondary,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _currentLocation,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.textSecondary,
+              Consumer(
+                builder: (context, ref, child) {
+                  final locationState = ref.watch(locationStateProvider);
+                  
+                  return locationState.when(
+                    loading: () => const Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          color: AppTheme.neutralGrey,
+                          size: 16,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Detecting location...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppTheme.neutralGrey,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    error: (error, stack) => Row(
+                      children: [
+                        const Icon(
+                          Icons.location_off,
+                          color: AppTheme.accentRed,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Location unavailable',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.accentRed,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final locationNotifier = ref.read(locationStateProvider.notifier);
+                            await locationNotifier.requestLocationPermission();
+                          },
+                          child: const Text('Enable'),
+                        ),
+                      ],
+                    ),
+                    data: (district) {
+                      if (district == null) {
+                        return Row(
+                          children: [
+                            const Icon(
+                              Icons.location_off,
+                              color: AppTheme.neutralGrey,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'Location permission required',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppTheme.neutralGrey,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                final locationNotifier = ref.read(locationStateProvider.notifier);
+                                await locationNotifier.requestLocationPermission();
+                              },
+                              child: const Text('Allow'),
+                            ),
+                          ],
+                        );
+                      }
+                      
+                      return Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            color: AppTheme.primaryBlack,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              district.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: AppTheme.primaryBlack,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.refresh,
+                              size: 20,
+                              color: AppTheme.neutralGrey,
+                            ),
+                            onPressed: () {
+                              ref.read(locationStateProvider.notifier).refreshLocation();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
               
               const SizedBox(height: 40),
