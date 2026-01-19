@@ -63,109 +63,134 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: AppConstants.iconTopMargin),
+                  const SizedBox(height: 8),
                   
                   // App Header
-                  Container(
-                    width: AppConstants.brandIconSize,
-                    height: AppConstants.brandIconSize,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.primaryBlack, width: 1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.pets,
-                      size: 24,
-                      color: AppTheme.primaryBlack,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: AppConstants.brandIconSize,
+                      height: AppConstants.brandIconSize,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.primaryBlack, width: 1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.pets,
+                        size: 24,
+                        color: AppTheme.primaryBlack,
+                      ),
                     ),
                   ),
                   
-                  const SizedBox(height: AppConstants.iconBrandSpacing),
+                  const SizedBox(height: 8),
                   
                   // App Title
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Rapid',
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryBlack,
-                          height: 1.1,
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Rapid',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryBlack,
+                            height: 1.1,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Response Team',
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w300,
-                          color: AppTheme.neutralGrey,
-                          height: 1.1,
+                        Text(
+                          'Response Team',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w300,
+                            color: AppTheme.neutralGrey,
+                            height: 1.1,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: AppConstants.brandBodySpacing),
-                  
-                  // Section Title
-                  const Text(
-                    'Nearby situations',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.primaryBlack,
-                      letterSpacing: -0.01,
+                      ],
                     ),
                   ),
                   
-                  const SizedBox(height: AppConstants.fieldSpacing),
+
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
             
             // Alerts content - shows placeholder + real alerts from provider
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                itemCount: alerts.length + 1, // +1 for placeholder
-                itemBuilder: (context, index) {
-                  // First item is always the placeholder
-                  if (index == 0) {
-                    final placeholderAlert = {
-                      'name': 'Ravi Kumar',
-                      'mobile_number': '+91 98765 43210',
-                      'exact_lat': 12.9716,
-                      'exact_lng': 77.5946,
-                      'approx_loc': 'Near MG Road Metro Station, Bangalore',
-                      'message': 'Car accident, need immediate assistance',
-                      'timestamp': DateTime.now().subtract(const Duration(minutes: 3)).millisecondsSinceEpoch,
-                      'isPlaceholder': true,
-                    };
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  // Clear expired alerts and refresh
+                  await ref.read(activeAlertsProvider.notifier).removeExpiredAlerts();
+                  await ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+                },
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
+                  itemCount: alerts.length + 2, // +1 for placeholder, +1 for debug clear button
+                  itemBuilder: (context, index) {
+                    // First item is always the placeholder
+                    if (index == 0) {
+                      final placeholderAlert = {
+                        'name': 'Ravi Kumar',
+                        'mobile_number': '+91 98765 43210',
+                        'exact_lat': 12.9716,
+                        'exact_lng': 77.5946,
+                        'approx_loc': 'Near MG Road Metro Station, Bangalore',
+                        'message': 'Car accident, need immediate assistance',
+                        'timestamp': DateTime.now().subtract(const Duration(minutes: 3)).millisecondsSinceEpoch,
+                        'isPlaceholder': true,
+                      };
+                      
+                      // Calculate distance for placeholder
+                      final distance = _calculateDistance(
+                        placeholderAlert['exact_lat'] as double?,
+                        placeholderAlert['exact_lng'] as double?,
+                        userPosition,
+                      );
+                      
+                      return _buildAlertCard(placeholderAlert, distance ?? 2.4);
+                    }
                     
-                    // Calculate distance for placeholder
+                    // Last item is debug clear button
+                    if (index == alerts.length + 1) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await ref.read(activeAlertsProvider.notifier).clearAllAlerts();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ All alerts cleared'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade100,
+                            foregroundColor: Colors.red.shade700,
+                            side: BorderSide(color: Colors.red.shade300),
+                          ),
+                          child: const Text('🗑️ Clear All Alerts (Debug)'),
+                        ),
+                      );
+                    }
+                    
+                    // Subsequent items are real alerts
+                    final alert = alerts[index - 1];
+                    
+                    // Calculate distance for this alert
                     final distance = _calculateDistance(
-                      placeholderAlert['exact_lat'] as double?,
-                      placeholderAlert['exact_lng'] as double?,
+                      alert['exact_lat'] as double?,
+                      alert['exact_lng'] as double?,
                       userPosition,
                     );
                     
-                    return _buildAlertCard(placeholderAlert, distance ?? 2.4);
-                  }
-                  
-                  // Subsequent items are real alerts
-                  final alert = alerts[index - 1];
-                  
-                  // Calculate distance for this alert
-                  final distance = _calculateDistance(
-                    alert['exact_lat'] as double?,
-                    alert['exact_lng'] as double?,
-                    userPosition,
-                  );
-                  
-                  return _buildAlertCard(alert, distance);
-                },
+                    return _buildAlertCard(alert, distance);
+                  },
+                ),
               ),
             ),
             

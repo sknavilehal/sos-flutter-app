@@ -38,6 +38,7 @@ dependencies:
   
   # Location & HTTP
   geolocator: ^13.0.2
+  geocoding: ^3.0.0
   http: ^1.2.2
   
   # State Management & Navigation

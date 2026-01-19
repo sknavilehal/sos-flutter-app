@@ -8,7 +8,8 @@ import '../core/config/api_config.dart';
 abstract class SOSService {
   /// Send SOS alert to backend
   Future<SOSResponse> sendSOSAlert({
-    required String district,
+    required String sosId,
+    required String sosType,
     required Position location,
     Map<String, dynamic>? userInfo,
   });
@@ -23,19 +24,20 @@ class HTTPSOSService implements SOSService {
   
   @override
   Future<SOSResponse> sendSOSAlert({
-    required String district,
+    required String sosId,
+    required String sosType,
     required Position location,
     Map<String, dynamic>? userInfo,
   }) async {
     try {
       final sosData = {
-        'district': district.toLowerCase(),
+        'sos_id': sosId,
+        'sos_type': sosType,
         'location': {
           'latitude': location.latitude,
           'longitude': location.longitude,
           'accuracy': location.accuracy,
           'timestamp': location.timestamp.toIso8601String(),
-          'address': 'Emergency location in $district'
         },
         'userInfo': userInfo ?? {
           'deviceId': 'mobile-device',
@@ -44,6 +46,8 @@ class HTTPSOSService implements SOSService {
         },
         'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
       };
+
+      print('📤 Sending SOS request: $sosData'); // Debug log
 
       final response = await http.post(
         Uri.parse(ApiConfig.sosEndpoint),
@@ -56,12 +60,14 @@ class HTTPSOSService implements SOSService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('✅ Backend response: $data'); // Debug log
         return SOSResponse.success(
-          messageId: data['messageId'] ?? 'unknown',
-          topic: data['topic'] ?? 'district-$district',
-          message: data['message'] ?? 'SOS alert sent successfully',
+          messageId: data['messageId']?.toString() ?? data['sosId']?.toString() ?? 'unknown',
+          topic: data['topic']?.toString() ?? 'unknown',
+          message: data['message']?.toString() ?? 'SOS alert processed successfully',
         );
       } else {
+        print('❌ Backend error response: ${response.statusCode} - ${response.body}'); // Debug log
         final errorData = json.decode(response.body);
         return SOSResponse.error(
           error: errorData['error'] ?? 'Unknown error',
@@ -69,6 +75,7 @@ class HTTPSOSService implements SOSService {
         );
       }
     } catch (e) {
+      print('❌ SOS Service Exception: $e'); // Debug log
       String errorMessage = 'Failed to send SOS alert';
       if (e.toString().contains('TimeoutException')) {
         errorMessage = 'Request timeout. Please check your connection and backend server.';

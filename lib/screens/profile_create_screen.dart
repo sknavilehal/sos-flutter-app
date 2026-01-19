@@ -106,7 +106,6 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   color: AppTheme.primaryBlack,
                 ),
                 decoration: const InputDecoration(
-                  hintText: 'Enter Name',
                   border: UnderlineInputBorder(
                     borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
                   ),

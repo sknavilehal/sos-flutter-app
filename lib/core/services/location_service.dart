@@ -9,6 +9,12 @@ abstract class LocationService {
   /// Get current district directly
   Future<String?> getCurrentDistrict();
   
+  /// Get human-readable address from coordinates
+  Future<String?> getCurrentAddress();
+  
+  /// Get address from coordinates
+  Future<String?> getAddressFromCoordinates(double latitude, double longitude);
+  
   /// Check if location permissions are granted
   Future<bool> hasLocationPermission();
   
