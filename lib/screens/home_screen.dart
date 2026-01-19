@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/providers/location_provider.dart';
+import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
 import '../core/config/api_config.dart';
 
@@ -17,11 +18,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isSendingSOS = false;
+  final TextEditingController _messageController = TextEditingController();
   
   @override
   void initState() {
     super.initState();
     // Location is now handled by LocationStateNotifier
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -71,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'Rapid',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryBlack,
                         height: 1.1,
@@ -80,7 +88,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'Response Team',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 32,
                         fontWeight: FontWeight.w300,
                         color: AppTheme.neutralGrey,
                         height: 1.1,
@@ -290,6 +298,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               
+              const SizedBox(height: 16),
+              
+              // Emergency Message Input (Optional)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  maxLines: 2,
+                  maxLength: 100,
+                  decoration: const InputDecoration(
+                    hintText: 'Brief description (optional)\nE.g., "Medical emergency", "Car accident"',
+                    border: InputBorder.none,
+                    counterStyle: TextStyle(fontSize: 12),
+                  ),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.primaryBlack,
+                  ),
+                ),
+              ),
+              
               const SizedBox(height: 24),
               
               // SOS Button
@@ -353,58 +387,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               
-              const SizedBox(height: 40),
-              
-              // Emergency Contacts
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Emergency Contacts',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.primaryBlack,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Police
-                  _buildEmergencyContact(
-                    icon: Icons.local_police,
-                    title: 'Police',
-                    number: '100',
-                    onTap: () {
-                      // TODO: Call police
-                    },
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Ambulance
-                  _buildEmergencyContact(
-                    icon: Icons.local_hospital,
-                    title: 'Ambulance',
-                    number: '108',
-                    onTap: () {
-                      // TODO: Call ambulance
-                    },
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Fire Brigade
-                  _buildEmergencyContact(
-                    icon: Icons.local_fire_department,
-                    title: 'Fire Brigade',
-                    number: '101',
-                    onTap: () {
-                      // TODO: Call fire brigade
-                    },
-                  ),
-                ],
-              ),
-              
               const SizedBox(height: 20),
             ],
             ),
@@ -462,8 +444,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         speedAccuracy: 0.0,
       );
 
-      print('🆘 Sending SOS from $district');
-      print('🆘 Backend URL: ${ApiConfig.sosEndpoint}');
+      // Get user profile data for emergency contact info
+      final userName = await ProfileService.getUserName() ?? 'Emergency Contact';
+      final userMobile = await ProfileService.getUserMobile() ?? '';
       
       final response = await sosService.sendSOSAlert(
         district: district,
@@ -472,7 +455,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'deviceId': 'mobile-device',
           'platform': 'flutter',
           'appVersion': '1.0.0',
+          'name': userName,
+          'mobile_number': userMobile,
           'timestamp': DateTime.now().toIso8601String(),
+          'message': _messageController.text.trim().isEmpty 
+                    ? 'Emergency assistance needed' 
+                    : _messageController.text.trim(),
         },
       );
 
@@ -525,7 +513,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       }
     } catch (e) {
-      print('❌ SOS error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -542,61 +529,5 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
       }
     }
-  }
-
-  Widget _buildEmergencyContact({
-    required IconData icon,
-    required String title,
-    required String number,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: AppTheme.primaryBlack,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.primaryBlack,
-                    ),
-                  ),
-                  Text(
-                    number,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.neutralGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.phone,
-              color: AppTheme.neutralGrey,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

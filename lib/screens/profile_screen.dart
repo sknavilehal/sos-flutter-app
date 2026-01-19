@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
+import '../core/services/profile_service.dart';
 
 /// Profile screen showing user information
 class ProfileScreen extends StatefulWidget {
@@ -11,16 +12,31 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Arjun Singh');
-  final TextEditingController _mobileController = TextEditingController(text: '+91 98765 43210');
-  final TextEditingController _addressController = TextEditingController(text: '12th Main, Indiranagar');
-  final String _currentDistrict = 'East Bangalore';
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+  
+  Future<void> _loadProfileData() async {
+    final name = await ProfileService.getUserName();
+    final mobile = await ProfileService.getUserMobile();
+    
+    if (mounted) {
+      setState(() {
+        _nameController.text = name ?? '';
+        _mobileController.text = mobile ?? '';
+      });
+    }
+  }
   
   @override
   void dispose() {
     _nameController.dispose();
     _mobileController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -151,7 +167,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
                   decoration: const InputDecoration(
+                    counterText: '',
                     border: UnderlineInputBorder(
                       borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
                     ),
@@ -162,71 +180,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
                     ),
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-                
-                const SizedBox(height: AppConstants.fieldSpacing),
-                
-                // Address Field
-                const Text(
-                  'ADDRESS (AUTO-POPULATED)',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.neutralGrey,
-                    letterSpacing: 0.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _addressController,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: AppTheme.neutralGrey,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-                
-                const SizedBox(height: AppConstants.fieldSpacing),
-                
-                // District Field (Read-only)
-                const Text(
-                  'DISTRICT (AUTO-POPULATED)',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.neutralGrey,
-                    letterSpacing: 0.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                    ),
-                  ),
-                  child: Text(
-                    _currentDistrict,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: AppTheme.neutralGrey,
-                      fontWeight: FontWeight.w400,
-                    ),
                   ),
                 ),
                 
@@ -241,14 +194,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: InkWell(
-                    onTap: () {
-                      // TODO: Save updated profile data
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profile updated successfully'),
-                          backgroundColor: AppTheme.successColor,
-                        ),
-                      );
+                    onTap: () async {
+                      final name = _nameController.text.trim();
+                      final mobile = _mobileController.text.trim();
+                      
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter your name'),
+                            backgroundColor: AppTheme.errorColor,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      if (mobile.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter your mobile number'),
+                            backgroundColor: AppTheme.errorColor,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      if (!ProfileService.isValidIndianMobile(mobile)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid 10-digit mobile number'),
+                            backgroundColor: AppTheme.errorColor,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      try {
+                        await ProfileService.saveProfile(
+                          name: name,
+                          mobile: mobile,
+                        );
+                        
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile updated successfully'),
+                              backgroundColor: AppTheme.successColor,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to update profile. Please try again.'),
+                              backgroundColor: AppTheme.errorColor,
+                            ),
+                          );
+                        }
+                      }
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -274,95 +277,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 
                 const SizedBox(height: 40),
-                
-                // Additional Options
-                _buildOptionItem(
-                  icon: Icons.location_on,
-                  title: 'Location Permissions',
-                  subtitle: 'Manage location access',
-                  onTap: () {
-                    // TODO: Handle location permissions
-                  },
-                ),
-                
-                const SizedBox(height: 16),
-                
-                _buildOptionItem(
-                  icon: Icons.notifications,
-                  title: 'Notification Settings',
-                  subtitle: 'Manage alert notifications',
-                  onTap: () {
-                    // TODO: Handle notification settings
-                  },
-                ),
-                
-                const SizedBox(height: 16),
-                
-                _buildOptionItem(
-                  icon: Icons.info,
-                  title: 'About RRT',
-                  subtitle: 'App version and information',
-                  onTap: () {
-                    // TODO: Show about dialog
-                  },
-                ),
-                
-                const SizedBox(height: 40),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: AppTheme.textSecondary,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: AppTheme.textSecondary,
-              size: 16,
-            ),
-          ],
         ),
       ),
     );

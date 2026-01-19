@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
+import '../core/services/profile_service.dart';
 import 'main_navigation_screen.dart';
 
 /// Profile creation screen for first-time setup
@@ -139,8 +140,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   color: AppTheme.primaryBlack,
                 ),
                 keyboardType: TextInputType.phone,
+                maxLength: 10,
                 decoration: const InputDecoration(
-                  hintText: '+1 (000) 000-0000',
+                  counterText: '',
                   border: UnderlineInputBorder(
                     borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
                   ),
@@ -187,8 +189,11 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: InkWell(
-                  onTap: () {
-                    if (_nameController.text.trim().isEmpty) {
+                  onTap: () async {
+                    final name = _nameController.text.trim();
+                    final mobile = _mobileController.text.trim();
+                    
+                    if (name.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please enter your name'),
@@ -198,7 +203,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                       return;
                     }
                     
-                    if (_mobileController.text.trim().isEmpty) {
+                    if (mobile.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please enter your mobile number'),
@@ -208,11 +213,38 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                       return;
                     }
                     
-                    // TODO: Save profile data
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-                    );
+                    if (!ProfileService.isValidIndianMobile(mobile)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid 10-digit mobile number'),
+                          backgroundColor: AppTheme.errorColor,
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    try {
+                      await ProfileService.saveProfile(
+                        name: name,
+                        mobile: mobile,
+                      );
+                      
+                      if (context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to save profile. Please try again.'),
+                            backgroundColor: AppTheme.errorColor,
+                          ),
+                        );
+                      }
+                    }
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,

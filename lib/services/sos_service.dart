@@ -28,11 +28,6 @@ class HTTPSOSService implements SOSService {
     Map<String, dynamic>? userInfo,
   }) async {
     try {
-      print('📡 Sending SOS alert...');
-      print('District: $district');
-      print('Location: ${location.latitude}, ${location.longitude}');
-      print('Backend URL: ${ApiConfig.sosEndpoint}');
-      
       final sosData = {
         'district': district.toLowerCase(),
         'location': {
@@ -59,9 +54,6 @@ class HTTPSOSService implements SOSService {
         body: json.encode(sosData),
       ).timeout(Duration(seconds: _timeoutSeconds));
 
-      print('📡 Response status: ${response.statusCode}');
-      print('📡 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return SOSResponse.success(
@@ -77,8 +69,6 @@ class HTTPSOSService implements SOSService {
         );
       }
     } catch (e) {
-      print('❌ SOS send error: $e');
-      
       String errorMessage = 'Failed to send SOS alert';
       if (e.toString().contains('TimeoutException')) {
         errorMessage = 'Request timeout. Please check your connection and backend server.';

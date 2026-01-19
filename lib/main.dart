@@ -5,7 +5,17 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/notification_service.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/alerts_screen.dart';
+
+/// Top-level function for handling background FCM messages
+/// Required to be outside any class for Firebase to access it
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  await NotificationService.handleBackgroundMessage(message);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,23 +28,36 @@ void main() async {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
     // Firebase configuration not found - app will run without Firebase features
-    print('Warning: Firebase not configured. Push notifications will not work.');
-    print('Error: $e');
+    // Silent error handling - Firebase not configured
+    // Error details suppressed for cleaner logs
   }
   
   runApp(const ProviderScope(child: RRTApp()));
 }
 
-class RRTApp extends StatelessWidget {
+/// Global navigator key for handling navigation from FCM notifications
+/// This allows navigation from anywhere in the app, including background contexts
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+class RRTApp extends ConsumerWidget {
   const RRTApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize notification service with navigator key and Riverpod ref
+    // This enables FCM notifications to navigate and update state
+    NotificationService.initialize(navigatorKey, ref);
+    
     return MaterialApp(
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
+      navigatorKey: navigatorKey, // Attach global navigator key
       home: const OnboardingScreen(), // Start with onboarding
       debugShowCheckedModeBanner: false,
+      // Define named routes for navigation from notifications
+      routes: {
+        '/alerts': (context) => const AlertsScreen(),
+      },
     );
   }
 }

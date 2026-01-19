@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'notification_service.dart';
 
 /// FCM Service for handling push notifications and topic subscriptions
 class FCMService {
@@ -20,46 +21,30 @@ class FCMService {
   Future<void> initialize() async {
     // Check if Firebase is available
     try {
-      print('FCMService: Starting initialization...');
       final apps = Firebase.apps;
-      print('FCMService: Found ${apps.length} Firebase apps');
       
       if (apps.isNotEmpty) {
-        print('FCMService: Firebase available, initializing messaging...');
         _firebaseMessaging = FirebaseMessaging.instance;
         _isFirebaseAvailable = true;
         
         // Request notification permissions
-        print('FCMService: Requesting notification permissions...');
         await _requestNotificationPermissions();
-        print('FCMService: Notification permissions handled');
         
         // Initialize local notifications
-        print('FCMService: Initializing local notifications...');
         await _initializeLocalNotifications();
-        print('FCMService: Local notifications initialized');
         
         // Get FCM token
-        print('FCMService: Getting FCM token...');
         _fcmToken = await _firebaseMessaging!.getToken()
             .timeout(const Duration(seconds: 5));
-        print('FCMService: FCM Token received: ${_fcmToken?.substring(0, 20)}...');
 
         // Set up message handlers
-        print('FCMService: Setting up message handlers...');
         _setupMessageHandlers();
-        print('FCMService: Message handlers configured');
-        
-        print('FCMService: Initialization completed successfully');
       } else {
-        print('FCMService: No Firebase apps found - FCM features disabled');
         if (kDebugMode) {
           debugPrint('Firebase not available - FCM features disabled');
         }
       }
     } catch (e) {
-      print('FCMService: Initialization failed: $e');
-      print('FCMService: Error type: ${e.runtimeType}');
       if (kDebugMode) {
         debugPrint('Failed to initialize FCM: $e');
       }
@@ -218,12 +203,8 @@ class FCMService {
 
   /// Handle foreground messages
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    if (kDebugMode) {
-      print('Foreground message received: ${message.messageId}');
-      print('Title: ${message.notification?.title}');
-      print('Body: ${message.notification?.body}');
-      print('Data: ${message.data}');
-    }
+    // Process the message data through NotificationService
+    await NotificationService.handleForegroundMessage(message);
 
     // Show local notification for foreground messages
     await _showLocalNotification(message);
@@ -231,10 +212,6 @@ class FCMService {
 
   /// Handle background messages
   void _handleBackgroundMessage(RemoteMessage message) {
-    if (kDebugMode) {
-      print('Background message tapped: ${message.messageId}');
-    }
-    
     // Navigate to alerts screen or specific alert
     _navigateToAlert(message.data);
   }

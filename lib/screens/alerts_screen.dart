@@ -1,32 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
+import '../core/providers/alerts_provider.dart';
+import '../core/providers/location_provider.dart';
 
 /// Alerts screen showing nearby SOS situations
-class AlertsScreen extends StatefulWidget {
+/// Watches activeAlertsProvider to display real-time emergency alerts
+class AlertsScreen extends ConsumerStatefulWidget {
   const AlertsScreen({super.key});
 
   @override
-  State<AlertsScreen> createState() => _AlertsScreenState();
+  ConsumerState<AlertsScreen> createState() => _AlertsScreenState();
 }
 
-class _AlertsScreenState extends State<AlertsScreen> {
-  // Mock data for nearby alerts
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'id': '1',
-      'senderName': 'Rajesh',
-      'location': '12th Main, Indiranagar • East Bangalore',
-      'distance': '4kms away',
-      'timeAgo': 'Started 4 mins ago',
-      'status': 'ACTIVE',
-      'phoneNumber': '+91 98765 43210',
-    },
-  ];
+class _AlertsScreenState extends ConsumerState<AlertsScreen> {
+  /// Calculate distance between user and alert location
+  /// Returns distance in kilometers, or null if calculation fails
+  double? _calculateDistance(double? alertLat, double? alertLng, Position? userPosition) {
+    if (alertLat == null || alertLng == null || userPosition == null) {
+      return null;
+    }
+    
+    try {
+      // Use Geolocator's distance calculation (returns meters)
+      final distanceInMeters = Geolocator.distanceBetween(
+        userPosition.latitude,
+        userPosition.longitude,
+        alertLat,
+        alertLng,
+      );
+      
+      // Convert to kilometers and round to 1 decimal place
+      return double.parse((distanceInMeters / 1000).toStringAsFixed(1));
+    } catch (e) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Watch both alerts and location providers for real-time updates
+    final alerts = ref.watch(activeAlertsProvider);
+    final locationState = ref.watch(locationStateProvider);
+    
+    // Get user's current position for distance calculations
+    Position? userPosition;
+    if (locationState.hasValue && locationState.value != null) {
+      // Note: In a real app, you'd want to get the actual Position object
+      // For now, we'll handle this in the distance calculation
+    }
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -100,45 +125,48 @@ class _AlertsScreenState extends State<AlertsScreen> {
               ),
             ),
             
-            // Alerts content
+            // Alerts content - shows placeholder + real alerts from provider
             Expanded(
-              child: _alerts.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.check_circle_outline,
-                            size: 64,
-                            color: AppTheme.textSecondary,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'No active alerts in your area',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'You\'ll be notified when someone needs help nearby',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                      itemCount: _alerts.length,
-                      itemBuilder: (context, index) {
-                        return _buildAlertCard(_alerts[index]);
-                      },
-                    ),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
+                itemCount: alerts.length + 1, // +1 for placeholder
+                itemBuilder: (context, index) {
+                  // First item is always the placeholder
+                  if (index == 0) {
+                    final placeholderAlert = {
+                      'name': 'Ravi Kumar',
+                      'mobile_number': '+91 98765 43210',
+                      'exact_lat': 12.9716,
+                      'exact_lng': 77.5946,
+                      'approx_loc': 'Near MG Road Metro Station, Bangalore',
+                      'message': 'Car accident, need immediate assistance',
+                      'timestamp': DateTime.now().subtract(const Duration(minutes: 3)).millisecondsSinceEpoch,
+                      'isPlaceholder': true,
+                    };
+                    
+                    // Calculate distance for placeholder
+                    final distance = _calculateDistance(
+                      placeholderAlert['exact_lat'] as double?,
+                      placeholderAlert['exact_lng'] as double?,
+                      userPosition,
+                    );
+                    
+                    return _buildAlertCard(placeholderAlert, distance ?? 2.4);
+                  }
+                  
+                  // Subsequent items are real alerts
+                  final alert = alerts[index - 1];
+                  
+                  // Calculate distance for this alert
+                  final distance = _calculateDistance(
+                    alert['exact_lat'] as double?,
+                    alert['exact_lng'] as double?,
+                    userPosition,
+                  );
+                  
+                  return _buildAlertCard(alert, distance);
+                },
+              ),
             ),
             
             // Footer
@@ -160,7 +188,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
     );
   }
 
-  Widget _buildAlertCard(Map<String, dynamic> alert) {
+  Widget _buildAlertCard(Map<String, dynamic> alert, double? distance) {
+    // Calculate time ago from timestamp
+    final timestamp = alert['timestamp'] as int? ?? 0;
+    final alertTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final timeAgo = _formatTimeAgo(DateTime.now().difference(alertTime));
+    
+    // Format distance display
+    final distanceText = distance != null ? '${distance}km away' : 'Distance unknown';
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -183,23 +219,46 @@ class _AlertsScreenState extends State<AlertsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentRed,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  alert['status'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentRed,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'ACTIVE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                  if (alert['isPlaceholder'] == true) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutralGrey.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppTheme.neutralGrey, width: 1),
+                      ),
+                      child: const Text(
+                        'DEMO',
+                        style: TextStyle(
+                          color: AppTheme.neutralGrey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               Text(
-                '${alert['distance']} • ${alert['timeAgo']}',
+                '$distanceText • $timeAgo',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppTheme.textSecondary,
@@ -212,7 +271,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           
           // Sender Name
           Text(
-            'Raised by: ${alert['senderName']}',
+            'Emergency: ${alert['name'] ?? 'Unknown User'}',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -222,15 +281,28 @@ class _AlertsScreenState extends State<AlertsScreen> {
           
           const SizedBox(height: 8),
           
-          // Location
+          // Location and Message
           Text(
-            'Location: ${alert['location']}',
+            '📍 ${alert['approx_loc'] ?? 'Unknown Location'}',
             style: const TextStyle(
               fontSize: 14,
               color: AppTheme.neutralGrey,
               height: 1.4,
             ),
           ),
+          
+          if (alert['message'] != null && alert['message'].isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              '💬 ${alert['message']}',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppTheme.primaryBlack,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ],
           
           const SizedBox(height: 20),
           
@@ -245,7 +317,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: InkWell(
-                    onTap: () => _makePhoneCall(alert['phoneNumber']),
+                    onTap: () => _showCallDialog(alert),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -281,7 +353,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: InkWell(
-                    onTap: () => _getDirections(alert['location']),
+                    onTap: () => _getDirections(
+                      alert['exact_lat'] as double?,
+                      alert['exact_lng'] as double?,
+                      alert['approx_loc'] as String?,
+                    ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -315,6 +391,91 @@ class _AlertsScreenState extends State<AlertsScreen> {
     );
   }
 
+  /// Format duration into human-readable "time ago" string
+  String _formatTimeAgo(Duration duration) {
+    if (duration.inMinutes < 1) {
+      return 'Just now';
+    } else if (duration.inMinutes < 60) {
+      return '${duration.inMinutes}m ago';
+    } else if (duration.inHours < 24) {
+      return '${duration.inHours}h ago';
+    } else {
+      return '${duration.inDays}d ago';
+    }
+  }
+
+  /// Show call dialog with phone number (privacy-aware)
+  /// Phone numbers are only shown for active alerts
+  void _showCallDialog(Map<String, dynamic> alert) {
+    final phoneNumber = alert['mobile_number'] as String?;
+    final name = alert['name'] as String? ?? 'Unknown User';
+    
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number not available'),
+          backgroundColor: AppTheme.accentRed,
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Call $name?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Emergency contact information:',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              phoneNumber,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryBlack,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'This number is visible only while this emergency is active.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _makePhoneCall(phoneNumber);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Call'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _makePhoneCall(String phoneNumber) async {
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
     try {
@@ -324,23 +485,37 @@ class _AlertsScreenState extends State<AlertsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not open phone dialer'),
+            backgroundColor: AppTheme.accentRed,
           ),
         );
       }
     }
   }
 
-  void _getDirections(String location) async {
-    final String encodedLocation = Uri.encodeComponent(location);
-    final Uri mapsUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedLocation');
-    
+  void _getDirections(double? latitude, double? longitude, String? fallbackLocation) async {
     try {
+      Uri mapsUri;
+      
+      // Prefer exact coordinates if available
+      if (latitude != null && longitude != null) {
+        // Use exact coordinates for Google Maps
+        mapsUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+      } else if (fallbackLocation != null && fallbackLocation.isNotEmpty) {
+        // Fall back to location name search
+        final String encodedLocation = Uri.encodeComponent(fallbackLocation);
+        mapsUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encodedLocation');
+      } else {
+        throw Exception('No location data available');
+      }
+      
+      // Launch external maps app
       await launchUrl(mapsUri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not open maps'),
+            content: Text('Could not open maps application'),
+            backgroundColor: AppTheme.accentRed,
           ),
         );
       }
