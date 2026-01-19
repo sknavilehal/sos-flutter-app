@@ -20,31 +20,46 @@ class FCMService {
   Future<void> initialize() async {
     // Check if Firebase is available
     try {
+      print('FCMService: Starting initialization...');
       final apps = Firebase.apps;
+      print('FCMService: Found ${apps.length} Firebase apps');
+      
       if (apps.isNotEmpty) {
+        print('FCMService: Firebase available, initializing messaging...');
         _firebaseMessaging = FirebaseMessaging.instance;
         _isFirebaseAvailable = true;
         
         // Request notification permissions
+        print('FCMService: Requesting notification permissions...');
         await _requestNotificationPermissions();
+        print('FCMService: Notification permissions handled');
         
         // Initialize local notifications
+        print('FCMService: Initializing local notifications...');
         await _initializeLocalNotifications();
+        print('FCMService: Local notifications initialized');
         
         // Get FCM token
-        _fcmToken = await _firebaseMessaging!.getToken();
-        if (kDebugMode) {
-          debugPrint('FCM Token: $_fcmToken');
-        }
+        print('FCMService: Getting FCM token...');
+        _fcmToken = await _firebaseMessaging!.getToken()
+            .timeout(const Duration(seconds: 5));
+        print('FCMService: FCM Token received: ${_fcmToken?.substring(0, 20)}...');
 
         // Set up message handlers
+        print('FCMService: Setting up message handlers...');
         _setupMessageHandlers();
+        print('FCMService: Message handlers configured');
+        
+        print('FCMService: Initialization completed successfully');
       } else {
+        print('FCMService: No Firebase apps found - FCM features disabled');
         if (kDebugMode) {
           debugPrint('Firebase not available - FCM features disabled');
         }
       }
     } catch (e) {
+      print('FCMService: Initialization failed: $e');
+      print('FCMService: Error type: ${e.runtimeType}');
       if (kDebugMode) {
         debugPrint('Failed to initialize FCM: $e');
       }
@@ -53,7 +68,10 @@ class FCMService {
 
   /// Subscribe to district topic
   Future<void> subscribeToDistrictTopic(String district) async {
+    print('FCMService: subscribeToDistrictTopic called with: $district');
+    
     if (!_isFirebaseAvailable || _firebaseMessaging == null) {
+      print('FCMService: Firebase not available for topic subscription');
       if (kDebugMode) {
         debugPrint('Firebase not available - cannot subscribe to district topic: $district');
       }
@@ -62,24 +80,57 @@ class FCMService {
     
     try {
       final topicName = 'district-$district';
+      print('FCMService: Topic name: $topicName');
       
       // Unsubscribe from previous topic if exists
       if (_currentTopic != null && _currentTopic != topicName) {
-        await _firebaseMessaging!.unsubscribeFromTopic(_currentTopic!);
-        if (kDebugMode) {
-          print('Unsubscribed from topic: $_currentTopic');
+        print('FCMService: Unsubscribing from previous topic: $_currentTopic');
+        try {
+          await _firebaseMessaging!.unsubscribeFromTopic(_currentTopic!)
+              .timeout(const Duration(seconds: 3));
+          print('FCMService: Successfully unsubscribed from: $_currentTopic');
+        } catch (e) {
+          print('FCMService: Unsubscribe timeout/error (continuing): $e');
         }
       }
       
-      // Subscribe to new topic
-      await _firebaseMessaging!.subscribeToTopic(topicName);
-      _currentTopic = topicName;
+      // Subscribe to new topic with retry logic
+      bool subscribed = false;
+      int attempts = 0;
+      const maxAttempts = 2;
       
-      if (kDebugMode) {
+      while (!subscribed && attempts < maxAttempts) {
+        attempts++;
+        print('FCMService: Subscribe attempt $attempts/$maxAttempts for: $topicName');
+        
+        try {
+          await _firebaseMessaging!.subscribeToTopic(topicName)
+              .timeout(const Duration(seconds: 4));
+          
+          _currentTopic = topicName;
+          subscribed = true;
+          print('FCMService: Successfully subscribed to: $topicName');
+          
+        } catch (e) {
+          print('FCMService: Subscribe attempt $attempts failed: $e');
+          if (attempts >= maxAttempts) {
+            print('FCMService: All subscription attempts failed, giving up');
+            // Don't throw - let the app continue without FCM topics
+            break;
+          }
+          // Wait a bit before retry
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+      }
+      
+      if (kDebugMode && subscribed) {
         debugPrint('Subscribed to topic: $topicName');
       }
     } catch (e) {
+      print('FCMService: Error in subscribeToDistrictTopic: $e');
+      print('FCMService: Error type: ${e.runtimeType}');
       debugPrint('Error subscribing to district topic: $e');
+      // Don't rethrow - let the app continue
     }
   }
 
