@@ -203,17 +203,38 @@ class FCMService {
 
   /// Handle foreground messages
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    // Process the message data through NotificationService
-    await NotificationService.handleForegroundMessage(message);
+    debugPrint('🔔 FCM: Handling foreground message: ${message.messageId}');
+    debugPrint('🔔 FCM: Message data: ${message.data}');
+    debugPrint('🔔 FCM: Message title: ${message.notification?.title}');
+    debugPrint('🔔 FCM: Message body: ${message.notification?.body}');
+    
+    try {
+      // Process the message data through NotificationService
+      debugPrint('🔔 FCM: Processing through NotificationService...');
+      await NotificationService.handleForegroundMessage(message);
+      debugPrint('🔔 FCM: NotificationService processing completed');
 
-    // Show local notification for foreground messages
-    await _showLocalNotification(message);
+      // Show local notification for foreground messages
+      debugPrint('🔔 FCM: Showing local notification...');
+      await _showLocalNotification(message);
+      debugPrint('🔔 FCM: Local notification shown successfully');
+    } catch (e) {
+      debugPrint('🔔 FCM: Error handling foreground message: $e');
+    }
   }
 
   /// Handle background messages
   void _handleBackgroundMessage(RemoteMessage message) {
-    // Navigate to alerts screen or specific alert
-    _navigateToAlert(message.data);
+    debugPrint('🔔 FCM: Handling background message: ${message.messageId}');
+    debugPrint('🔔 FCM: Background message data: ${message.data}');
+    
+    try {
+      // Navigate to alerts screen or specific alert
+      _navigateToAlert(message.data);
+      debugPrint('🔔 FCM: Background message navigation completed');
+    } catch (e) {
+      debugPrint('🔔 FCM: Error handling background message: $e');
+    }
   }
 
   /// Handle messages when app is opened from terminated state
@@ -234,6 +255,10 @@ class FCMService {
 
   /// Show local notification for foreground messages
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    debugPrint('🔔 FCM: Preparing local notification...');
+    debugPrint('🔔 FCM: Notification title: ${message.notification?.title ?? "SOS Alert"}');
+    debugPrint('🔔 FCM: Notification body: ${message.notification?.body ?? message.data["message"]}');
+    
     const androidDetails = AndroidNotificationDetails(
       'sos_alerts',
       'SOS Alerts',
@@ -254,13 +279,19 @@ class FCMService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
-      message.hashCode,
-      message.notification?.title ?? 'SOS Alert',
-      message.notification?.body ?? 'Emergency alert in your area',
-      notificationDetails,
-      payload: message.data.toString(),
-    );
+    try {
+      debugPrint('🔔 FCM: Calling _localNotifications.show...');
+      await _localNotifications.show(
+        message.hashCode,
+        message.notification?.title ?? 'SOS Alert',
+        message.notification?.body ?? 'Emergency alert in your area',
+        notificationDetails,
+        payload: message.data.toString(),
+      );
+      debugPrint('🔔 FCM: Local notification displayed successfully');
+    } catch (e) {
+      debugPrint('🔔 FCM: Error showing local notification: $e');
+    }
   }
 
   /// Handle notification tap

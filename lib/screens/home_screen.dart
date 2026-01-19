@@ -7,6 +7,7 @@ import '../core/constants/app_constants.dart';
 import '../core/providers/location_provider.dart';
 import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
+import '../services/district_subscription_service.dart';
 import '../core/config/api_config.dart';
 
 /// Home screen with location display and SOS button
@@ -25,6 +26,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _isStateLoaded = false;
   
+  // District subscription service
+  final _districtService = DistrictSubscriptionService();
+  
   // Cache futures to prevent rebuilding
   Future<bool>? _serverConnectionFuture;
   Future<bool>? _locationPermissionFuture;
@@ -35,6 +39,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _loadSOSState();
     _initializeFutures();
+    _initializeDistrictSubscription();
+  }
+  
+  /// Initialize district subscription for receiving SOS alerts
+  void _initializeDistrictSubscription() {
+    // Run district subscription in background
+    Future.microtask(() async {
+      final locationService = ref.read(locationServiceProvider);
+      await _districtService.initializeDistrictSubscription(locationService);
+    });
   }
   
   /// Initialize cached futures to prevent rebuilds

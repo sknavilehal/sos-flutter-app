@@ -4,9 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
-import 'core/services/fcm_service.dart';
 import 'core/services/notification_service.dart';
-import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/alerts_screen.dart';
 
 /// Top-level function for handling background FCM messages
@@ -44,20 +43,35 @@ class RRTApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Initialize notification service with navigator key and Riverpod ref
-    // This enables FCM notifications to navigate and update state
-    NotificationService.initialize(navigatorKey, ref);
-    
     return MaterialApp(
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey, // Attach global navigator key
-      home: const OnboardingScreen(), // Start with onboarding
+      home: FutureBuilder(
+        future: _initializeServices(ref),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          return const SplashScreen(); // Start with splash to check profile
+        },
+      ),
       debugShowCheckedModeBanner: false,
       // Define named routes for navigation from notifications
       routes: {
         '/alerts': (context) => const AlertsScreen(),
       },
     );
+  }
+  
+  /// Initialize async services
+  Future<void> _initializeServices(WidgetRef ref) async {
+    // Initialize notification service with navigator key and Riverpod ref
+    // This enables FCM notifications to navigate and update state
+    await NotificationService.initialize(navigatorKey, ref);
   }
 }

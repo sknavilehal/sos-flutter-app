@@ -1,9 +1,8 @@
 class ApiConfig {
-  static const String _devBaseUrl = 'http://localhost:3000';
-  static const String _prodBaseUrl = 'https://your-production-url.com';
+  static const String _prodBaseUrl = 'https://9bfc60bd2260.ngrok-free.app';
   
   // Update this with your ngrok URL when testing on physical device
-  static const String _ngrokUrl = 'https://f5e501e54430.ngrok-free.app';
+  static const String _ngrokUrl = 'https://9bfc60bd2260.ngrok-free.app';
   
   static String get baseUrl {
     // Check if we're in debug mode (development)

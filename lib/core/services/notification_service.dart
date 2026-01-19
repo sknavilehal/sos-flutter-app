@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/alerts_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,12 +16,134 @@ class NotificationService {
 
   static GlobalKey<NavigatorState>? _navigatorKey;
   static WidgetRef? _ref;
+  static bool _initialized = false;
+  static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   /// Initialize the notification service with navigation key and Riverpod ref
   /// Called from main.dart to set up navigation and state management access
-  static void initialize(GlobalKey<NavigatorState> navigatorKey, WidgetRef ref) {
+  static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey, WidgetRef ref) async {
+    debugPrint('🔔 NotificationService: Initializing...');
     _navigatorKey = navigatorKey;
     _ref = ref;
+    
+    if (!_initialized) {
+      await _initializeLocalNotifications();
+      _setupMessageHandlers();
+      _initialized = true;
+      debugPrint('🔔 NotificationService: Initialization complete');
+    }
+  }
+  
+  /// Initialize local notifications
+  static Future<void> _initializeLocalNotifications() async {
+    debugPrint('🔔 NotificationService: Setting up local notifications...');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
+    );
+    debugPrint('🔔 NotificationService: Local notifications initialized');
+  }
+  
+  /// Setup FCM message handlers
+  static void _setupMessageHandlers() {
+    debugPrint('🔔 NotificationService: Setting up FCM message handlers...');
+    
+    try {
+      // Handle messages when app is in foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('🔔 NotificationService: Received foreground message: ${message.messageId}');
+        _handleForegroundMessageWithNotification(message);
+      });
+      
+      // Handle messages when app is in background but not terminated
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('🔔 NotificationService: App opened from background message: ${message.messageId}');
+        handleNotificationTap(message);
+      });
+      
+      debugPrint('🔔 NotificationService: FCM message handlers set up successfully');
+    } catch (e) {
+      debugPrint('🔔 NotificationService: Error setting up message handlers: $e');
+    }
+  }
+
+  /// Handle foreground messages with local notification display
+  static Future<void> _handleForegroundMessageWithNotification(RemoteMessage message) async {
+    debugPrint('🔔 NotificationService: Processing foreground message...');
+    debugPrint('🔔 NotificationService: Message data: ${message.data}');
+    debugPrint('🔔 NotificationService: Message title: ${message.notification?.title}');
+    debugPrint('🔔 NotificationService: Message body: ${message.notification?.body}');
+    
+    // Process the message data first
+    await handleForegroundMessage(message);
+    
+    // Show local notification
+    await _showLocalNotification(message);
+  }
+  
+  /// Show local notification for foreground messages
+  static Future<void> _showLocalNotification(RemoteMessage message) async {
+    debugPrint('🔔 NotificationService: Showing local notification...');
+    
+    const androidDetails = AndroidNotificationDetails(
+      'sos_alerts',
+      'SOS Alerts',
+      channelDescription: 'Emergency SOS alert notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    try {
+      final title = message.notification?.title ?? 'SOS Alert';
+      final body = message.notification?.body ?? message.data['message'] ?? 'Emergency alert in your area';
+      
+      debugPrint('🔔 NotificationService: Notification title: $title');
+      debugPrint('🔔 NotificationService: Notification body: $body');
+      
+      await _localNotifications.show(
+        message.hashCode,
+        title,
+        body,
+        notificationDetails,
+        payload: message.data.toString(),
+      );
+      
+      debugPrint('🔔 NotificationService: Local notification displayed successfully');
+    } catch (e) {
+      debugPrint('🔔 NotificationService: Error showing local notification: $e');
+    }
+  }
+  
+  /// Handle notification tap
+  static void _onNotificationTapped(NotificationResponse response) {
+    debugPrint('🔔 NotificationService: Notification tapped: ${response.payload}');
+    
+    // Navigate to alerts screen
+    _navigatorKey?.currentState?.pushNamed('/alerts');
   }
 
   /// Handle notification tap when app is in foreground or background
@@ -134,18 +258,27 @@ class NotificationService {
   /// Handle foreground messages (when app is open and visible)
   /// Shows in-app notifications and processes the data
   static Future<void> handleForegroundMessage(RemoteMessage message) async {
+    debugPrint('🔔 NotificationService: handleForegroundMessage called');
+    debugPrint('🔔 NotificationService: Processing message data...');
+    
     // Process the message data
     await _handleMessageData(message.data);
+    
+    debugPrint('🔔 NotificationService: Foreground message processing complete');
   }
 
   /// Handle background messages (when app is minimized or closed)
   /// This is called by the top-level function registered in main.dart
   static Future<void> handleBackgroundMessage(RemoteMessage message) async {
+    debugPrint('🔔 NotificationService: handleBackgroundMessage called');
+    debugPrint('🔔 NotificationService: Background message data: ${message.data}');
+    
     // Process the background message data
     try {
       await _handleMessageData(message.data);
+      debugPrint('🔔 NotificationService: Background message processing complete');
     } catch (e) {
-      // Silent error handling
+      debugPrint('🔔 NotificationService: Error processing background message: $e');
     }
   }
 
