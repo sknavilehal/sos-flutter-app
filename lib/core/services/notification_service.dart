@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/alerts_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/user_id_service.dart';
 
 /// Service for handling FCM notifications and navigation
 /// Manages how the app responds to incoming push notifications
@@ -68,6 +68,9 @@ class NotificationService {
       });
       
       // Handle messages when app is in background but not terminated
+      // TODO: Implement sender filtering for background messages
+      // Currently these messages show system notifications automatically
+      // We need to implement custom background message handling to filter self-alerts
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('🔔 NotificationService: App opened from background message: ${message.messageId}');
         handleNotificationTap(message);
@@ -85,6 +88,19 @@ class NotificationService {
     debugPrint('🔔 NotificationService: Message data: ${message.data}');
     debugPrint('🔔 NotificationService: Message title: ${message.notification?.title}');
     debugPrint('🔔 NotificationService: Message body: ${message.notification?.body}');
+    
+    // ✅ Client-side filtering: Check if this is a self-sent SOS alert
+    final messageSenderId = message.data['sender_id'];
+    if (messageSenderId != null) {
+      final currentUserId = await UserIdService.getUserId();
+      
+      if (messageSenderId == currentUserId) {
+        debugPrint('🚫 NotificationService: Filtering out self-sent SOS alert (sender: $messageSenderId)');
+        // Still process the data (add to alerts list) but don't show notification
+        await handleForegroundMessage(message);
+        return;
+      }
+    }
     
     // Process the message data first
     await handleForegroundMessage(message);

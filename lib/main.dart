@@ -10,9 +10,18 @@ import 'screens/alerts_screen.dart';
 
 /// Top-level function for handling background FCM messages
 /// Required to be outside any class for Firebase to access it
+/// TODO: Implement sender filtering for background/closed app messages
+/// Currently these show system notifications automatically without filtering
+/// Need to add UserIdService logic here to prevent self-notifications
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  
+  // TODO: Add sender filtering logic:
+  // 1. Get current user ID from SharedPreferences  
+  // 2. Check message.data['sender_id'] against current user ID
+  // 3. If match, prevent notification display (complex with system notifications)
+  
   await NotificationService.handleBackgroundMessage(message);
 }
 

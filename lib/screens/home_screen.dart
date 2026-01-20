@@ -8,7 +8,6 @@ import '../core/providers/location_provider.dart';
 import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
 import '../services/district_subscription_service.dart';
-import '../core/config/api_config.dart';
 
 /// Home screen with location display and SOS button
 class HomeScreen extends ConsumerStatefulWidget {
@@ -662,6 +661,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final userName = await ProfileService.getUserName() ?? 'Emergency Contact';
       final userMobile = await ProfileService.getUserMobile() ?? '';
       
+      // Get current address for notification
+      final currentAddress = await locationService.getCurrentAddress() ?? 'Location unavailable';
+      
       final response = await sosService.sendSOSAlert(
         sosId: sosId,
         sosType: 'sos_alert',
@@ -676,6 +678,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'message': _messageController.text.trim().isEmpty 
                     ? 'Emergency assistance needed' 
                     : _messageController.text.trim(),
+          'location': currentAddress,
         },
       );
 

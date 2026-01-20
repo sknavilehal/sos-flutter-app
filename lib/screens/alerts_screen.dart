@@ -129,33 +129,10 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                 },
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                  itemCount: alerts.length + 2, // +1 for placeholder, +1 for debug clear button
+                  itemCount: alerts.length + 1, // +1 for debug clear button
                   itemBuilder: (context, index) {
-                    // First item is always the placeholder
-                    if (index == 0) {
-                      final placeholderAlert = {
-                        'name': 'Ravi Kumar',
-                        'mobile_number': '+91 98765 43210',
-                        'exact_lat': 12.9716,
-                        'exact_lng': 77.5946,
-                        'approx_loc': 'Near MG Road Metro Station, Bangalore',
-                        'message': 'Car accident, need immediate assistance',
-                        'timestamp': DateTime.now().subtract(const Duration(minutes: 3)).millisecondsSinceEpoch,
-                        'isPlaceholder': true,
-                      };
-                      
-                      // Calculate distance for placeholder
-                      final distance = _calculateDistance(
-                        placeholderAlert['exact_lat'] as double?,
-                        placeholderAlert['exact_lng'] as double?,
-                        userPosition,
-                      );
-                      
-                      return _buildAlertCard(placeholderAlert, distance ?? 2.4);
-                    }
-                    
                     // Last item is debug clear button
-                    if (index == alerts.length + 1) {
+                    if (index == alerts.length) {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         child: ElevatedButton(
@@ -178,8 +155,8 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                       );
                     }
                     
-                    // Subsequent items are real alerts
-                    final alert = alerts[index - 1];
+                    // Real alerts
+                    final alert = alerts[index];
                     
                     // Calculate distance for this alert
                     final distance = _calculateDistance(
@@ -261,25 +238,6 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                       ),
                     ),
                   ),
-                  if (alert['isPlaceholder'] == true) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralGrey.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: AppTheme.neutralGrey, width: 1),
-                      ),
-                      child: const Text(
-                        'DEMO',
-                        style: TextStyle(
-                          color: AppTheme.neutralGrey,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
               Text(
