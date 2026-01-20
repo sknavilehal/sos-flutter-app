@@ -191,14 +191,18 @@ class FCMService {
       return;
     }
     
-    // Handle messages when app is in foreground
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    // ⚠️ DISABLED: FCM message handlers to prevent duplicate notifications
+    // NotificationService is handling FCM messages with sender filtering
+    // Uncomment these lines to re-enable FCMService message handling:
     
-    // Handle messages when app is in background but not terminated
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
+    // Handle messages when app is in foreground
+    // FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    
+    // Handle messages when app is in background but not terminated  
+    // FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
     
     // Handle messages when app is opened from terminated state
-    _handleTerminatedMessage();
+    // _handleTerminatedMessage();
   }
 
   /// Handle foreground messages

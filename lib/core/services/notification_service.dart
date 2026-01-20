@@ -95,9 +95,8 @@ class NotificationService {
       final currentUserId = await UserIdService.getUserId();
       
       if (messageSenderId == currentUserId) {
-        debugPrint('🚫 NotificationService: Filtering out self-sent SOS alert (sender: $messageSenderId)');
-        // Still process the data (add to alerts list) but don't show notification
-        await handleForegroundMessage(message);
+        debugPrint('🚫 NotificationService: Completely filtering out self-sent SOS alert (sender: $messageSenderId)');
+        debugPrint('🚫 NotificationService: Self-alert will NOT be added to alerts screen or shown as notification');
         return;
       }
     }
