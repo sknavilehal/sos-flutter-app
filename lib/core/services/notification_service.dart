@@ -68,13 +68,13 @@ class NotificationService {
       });
       
       // Handle messages when app is in background but not terminated
-      // TODO: Implement sender filtering for background messages
-      // Currently these messages show system notifications automatically
-      // We need to implement custom background message handling to filter self-alerts
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('🔔 NotificationService: App opened from background message: ${message.messageId}');
         handleNotificationTap(message);
       });
+      
+      // ✅ Handle messages when app is opened from terminated state
+      handleTerminatedMessage();
       
       debugPrint('🔔 NotificationService: FCM message handlers set up successfully');
     } catch (e) {
@@ -96,7 +96,9 @@ class NotificationService {
       
       if (messageSenderId == currentUserId) {
         debugPrint('🚫 NotificationService: Completely filtering out self-sent SOS alert (sender: $messageSenderId)');
-        debugPrint('🚫 NotificationService: Self-alert will NOT be added to alerts screen or shown as notification');
+        debugPrint('🚫 NotificationService: Self-alert wRill NOT be added to alerts screen or shown as notification');
+        // Process the message data first
+        
         return;
       }
     }
@@ -230,26 +232,33 @@ class NotificationService {
         
         // Add the new alert to our state management
         try {
-          if (effectiveRef != null) {
+          if (effectiveRef != null && _ref != null) {
+            // Use main ref if available
             await effectiveRef.read(activeAlertsProvider.notifier).addAlert(sosAlert);
           } else {
+            // Fallback to storage for background scenarios
             await _addAlertToStorage(sosAlert);
           }
         } catch (e) {
+          // Always fallback to storage if state management fails
           await _addAlertToStorage(sosAlert);
         }
         
-        // Clean up container if we created one
-        if (container != null) {
-          container.dispose();
-        }
         break;
         
       case 'sos_resolved':
         // Remove resolved SOS from active alerts
         final sosId = data['sos_id'] as String?;
         if (sosId != null) {
-          await _ref!.read(activeAlertsProvider.notifier).removeAlert(sosId);
+          try {
+            if (_ref != null) {
+              await _ref!.read(activeAlertsProvider.notifier).removeAlert(sosId);
+            } else {
+              await _removeAlertFromStorage(sosId);
+            }
+          } catch (e) {
+            await _removeAlertFromStorage(sosId);
+          }
         }
         break;
         
@@ -257,17 +266,26 @@ class NotificationService {
         // Update existing SOS with new information
         final sosId = data['sos_id'] as String?;
         if (sosId != null) {
-          final updates = <String, dynamic>{};
-          if (data.containsKey('message')) updates['message'] = data['message'];
-          if (data.containsKey('approx_loc')) updates['approx_loc'] = data['approx_loc'];
-          
-          await _ref!.read(activeAlertsProvider.notifier).updateAlert(sosId, updates);
+          try {
+            if (_ref != null) {
+              final updates = <String, dynamic>{};
+              if (data.containsKey('message')) updates['message'] = data['message'];
+              if (data.containsKey('approx_loc')) updates['approx_loc'] = data['approx_loc'];
+              
+              await _ref!.read(activeAlertsProvider.notifier).updateAlert(sosId, updates);
+            }
+          } catch (e) {
+            // Silent error handling for background scenarios
+          }
         }
         break;
         
       default:
         // Unknown message type
     }
+    
+    // Clean up container if we created one
+    container?.dispose();
   }
 
   /// Handle foreground messages (when app is open and visible)
@@ -306,6 +324,31 @@ class NotificationService {
     return null;
   }
 
+  /// Handle messages when app is opened from terminated state
+  static Future<void> handleTerminatedMessage() async {
+    try {
+      final message = await FirebaseMessaging.instance.getInitialMessage();
+      if (message != null) {
+        debugPrint('🔔 NotificationService: App opened from terminated state with message: ${message.messageId}');
+        
+        // Check for sender filtering
+        final messageSenderId = message.data['sender_id'];
+        if (messageSenderId != null) {
+          final currentUserId = await UserIdService.getUserId();
+          
+          if (messageSenderId == currentUserId) {
+            debugPrint('🚫 NotificationService: Filtering out self-sent alert from terminated state');
+            return;
+          }
+        }
+        
+        await handleNotificationTap(message);
+      }
+    } catch (e) {
+      debugPrint('🔔 NotificationService: Error handling terminated message: $e');
+    }
+  }
+
   /// Direct SharedPreferences alert storage for background scenarios
   /// Used when we can't access the main provider container
   static Future<void> _addAlertToStorage(Map<String, dynamic> alert) async {
@@ -317,6 +360,31 @@ class NotificationService {
       
       // Add new alert to the beginning
       alertsJson.insert(0, jsonEncode(alert));
+      
+      // Save back to storage
+      await prefs.setStringList('active_alerts', alertsJson);
+    } catch (e) {
+      // Silent error handling
+    }
+  }
+
+  /// Remove alert from SharedPreferences storage for background scenarios
+  static Future<void> _removeAlertFromStorage(String sosId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Get existing alerts
+      final alertsJson = prefs.getStringList('active_alerts') ?? [];
+      
+      // Remove alert with matching SOS ID
+      alertsJson.removeWhere((alertString) {
+        try {
+          final alert = jsonDecode(alertString);
+          return alert['sos_id'] == sosId;
+        } catch (e) {
+          return false;
+        }
+      });
       
       // Save back to storage
       await prefs.setStringList('active_alerts', alertsJson);

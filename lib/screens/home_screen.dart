@@ -770,6 +770,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         speedAccuracy: 0.0,
       );
 
+      // Get user profile data for stop notification
+      final userName = await ProfileService.getUserName() ?? 'Emergency Contact';
+      final userMobile = await ProfileService.getUserMobile() ?? '';
+      
+      // Get current address for stop notification
+      final currentAddress = await locationService.getCurrentAddress() ?? 'Location unavailable';
+
       // Send stop SOS request
       final response = await sosService.sendSOSAlert(
         sosId: _activeSosId!,
@@ -779,6 +786,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'deviceId': 'mobile-device',
           'platform': 'flutter',
           'appVersion': '1.0.0',
+          'name': userName,
+          'mobile_number': userMobile,
+          'timestamp': DateTime.now().toIso8601String(),
+          'location': currentAddress,
         },
       );
 
