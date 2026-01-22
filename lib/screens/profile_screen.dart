@@ -100,17 +100,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               
               const SizedBox(height: 12),
               
-              // Section Title
-              const Text(
-                'Profile',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.primaryBlack,
-                  letterSpacing: -0.01,
-                ),
-              ),
-              
               // Flexible spacer to center form content
               const Expanded(
                 child: Center(
@@ -123,6 +112,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Section Title
+                  const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.primaryBlack,
+                      letterSpacing: -0.01,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
                   // Name Field
                   const Text(
                     'NAME',

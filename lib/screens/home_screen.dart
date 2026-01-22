@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -24,6 +25,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _activeLocation;
   final TextEditingController _messageController = TextEditingController();
   bool _isStateLoaded = false;
+  
+  // Hold to send SOS functionality
+  bool _isHoldingButton = false;
+  int _holdProgress = 0; // 0-3 seconds
+  Timer? _holdTimer;
   
   // District subscription service
   final _districtService = DistrictSubscriptionService();
@@ -68,6 +74,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _messageController.dispose();
+    _holdTimer?.cancel();
     super.dispose();
   }
 
@@ -522,65 +529,157 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // SOS Button
+                    // SOS Button - Enhanced 3D Glossy Design
                     Container(
                       width: sosButtonSize,
                       height: sosButtonSize,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _isSendingSOS ? AppTheme.neutralGrey : AppTheme.accentRed,
-                        boxShadow: [
-                          BoxShadow(
-                            color: (_isSendingSOS ? AppTheme.neutralGrey : AppTheme.accentRed).withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
                       ),
-                      child: InkWell(
-                        onTap: _isSendingSOS ? null : _handleSOSPress,
-                        child: Center(
-                          child: _isSendingSOS 
-                            ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(
-                                    color: AppTheme.pureWhite,
-                                    strokeWidth: 3,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Sending...',
-                                    style: TextStyle(
-                                      fontSize: sosButtonSize * 0.08, // Responsive font size
-                                      color: AppTheme.pureWhite,
-                                    ),
-                                  ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          // Main gradient background for 3D effect
+                          gradient: _isSendingSOS 
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppTheme.neutralGrey.withValues(alpha: 0.8),
+                                  AppTheme.neutralGrey,
+                                  AppTheme.neutralGrey.withValues(alpha: 0.7),
                                 ],
+                                stops: const [0.0, 0.6, 1.0],
                               )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'SOS',
-                                    style: TextStyle(
-                                      fontSize: sosButtonSize * 0.16, // Responsive font size
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.pureWhite,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Tap for emergency',
-                                    style: TextStyle(
-                                      fontSize: sosButtonSize * 0.06, // Responsive font size
-                                      color: AppTheme.pureWhite,
-                                    ),
-                                  ),
+                            : const RadialGradient(
+                                center: Alignment(-0.3, -0.3),
+                                radius: 1.2,
+                                colors: [
+                                  Color(0xFFFF6B6B), // Lighter red highlight
+                                  Color(0xFFE63946), // Main red
+                                  Color(0xFFCC2936), // Darker red for depth
+                                  Color(0xFFB71C1C), // Deep red shadow
                                 ],
+                                stops: [0.0, 0.4, 0.8, 1.0],
                               ),
                         ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            // Glossy highlight overlay
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.center,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.4),
+                                Colors.white.withValues(alpha: 0.1),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.3, 1.0],
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: GestureDetector(
+                              onTapDown: _isSendingSOS ? null : _startHoldTimer,
+                              onTapUp: _isSendingSOS ? null : _cancelHoldTimer,
+                              onTapCancel: _isSendingSOS ? null : _cancelHoldTimer,
+                              child: Container(
+                                width: sosButtonSize,
+                                height: sosButtonSize,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: _isSendingSOS 
+                                    ? Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          const CircularProgressIndicator(
+                                            color: AppTheme.pureWhite,
+                                            strokeWidth: 3,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Sending...',
+                                            style: TextStyle(
+                                              fontSize: sosButtonSize * 0.08, // Responsive font size
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.pureWhite,
+                                              shadows: const [
+                                                Shadow(
+                                                  offset: Offset(0, 1),
+                                                  blurRadius: 2,
+                                                  color: Colors.black26,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          if (_isHoldingButton) ...[
+                                            CircularProgressIndicator(
+                                              value: _holdProgress / 3.0,
+                                              color: AppTheme.pureWhite,
+                                              strokeWidth: 4,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              '${3 - _holdProgress}',
+                                              style: TextStyle(
+                                                fontSize: sosButtonSize * 0.12,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.pureWhite,
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            Text(
+                                              'SOS',
+                                              style: TextStyle(
+                                                fontSize: sosButtonSize * 0.16, // Responsive font size
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.pureWhite,
+                                                letterSpacing: 2,
+                                                shadows: const [
+                                                  Shadow(
+                                                    offset: Offset(0, 2),
+                                                    blurRadius: 4,
+                                                    color: Colors.black26,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Hold instruction
+                    Text(
+                      _isHoldingButton 
+                        ? 'Keep holding...' 
+                        : 'Hold for 3 seconds to send alert',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.neutralGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     
                     const SizedBox(height: 16),
@@ -595,10 +694,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       child: TextField(
                         controller: _messageController,
-                        maxLines: 2,
+                        maxLines: 1,
                         maxLength: 100,
                         decoration: const InputDecoration(
-                          hintText: 'Brief description (optional)\nE.g., "Medical emergency", "Car accident"',
+                          hintText: 'Optional Message',
                           border: InputBorder.none,
                           counterStyle: TextStyle(fontSize: 12),
                         ),
@@ -621,6 +720,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
     );
+  }
+
+  /// Start hold timer when user presses down on SOS button
+  void _startHoldTimer(TapDownDetails details) {
+    if (_isSendingSOS) return;
+    
+    setState(() {
+      _isHoldingButton = true;
+      _holdProgress = 0;
+    });
+    
+    _holdTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _holdProgress++;
+      });
+      
+      if (_holdProgress >= 3) {
+        timer.cancel();
+        _holdTimer = null;
+        _isHoldingButton = false;
+        _handleSOSPress(); // Trigger SOS after 3 seconds
+      }
+    });
+  }
+  
+  /// Cancel hold timer when user releases or cancels tap
+  void _cancelHoldTimer([TapUpDetails? details]) {
+    _holdTimer?.cancel();
+    _holdTimer = null;
+    
+    if (mounted) {
+      setState(() {
+        _isHoldingButton = false;
+        _holdProgress = 0;
+      });
+    }
   }
 
   /// Handle SOS button press
