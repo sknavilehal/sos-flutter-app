@@ -551,32 +551,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ],
                                 stops: const [0.0, 0.6, 1.0],
                               )
-                            : const RadialGradient(
-                                center: Alignment(-0.3, -0.3),
-                                radius: 1.2,
-                                colors: [
-                                  Color(0xFFFF6B6B), // Lighter red highlight
-                                  Color(0xFFE63946), // Main red
-                                  Color(0xFFCC2936), // Darker red for depth
-                                  Color(0xFFB71C1C), // Deep red shadow
-                                ],
-                                stops: [0.0, 0.4, 0.8, 1.0],
-                              ),
+                            : _isHoldingButton
+                              ? const RadialGradient(
+                                  center: Alignment(0.3, 0.3), // Inverted for pressed effect
+                                  radius: 1.2,
+                                  colors: [
+                                    Color(0xFFB71C1C), // Deep red shadow (now highlight)
+                                    Color(0xFFCC2936), // Darker red for depth (now mid)
+                                    Color(0xFFE63946), // Main red (now deeper)
+                                    Color(0xFFFF6B6B), // Lighter red highlight (now deepest)
+                                  ],
+                                  stops: [0.0, 0.4, 0.8, 1.0],
+                                )
+                              : const RadialGradient(
+                                  center: Alignment(-0.3, -0.3),
+                                  radius: 1.2,
+                                  colors: [
+                                    Color(0xFFFF6B6B), // Lighter red highlight
+                                    Color(0xFFE63946), // Main red
+                                    Color(0xFFCC2936), // Darker red for depth
+                                    Color(0xFFB71C1C), // Deep red shadow
+                                  ],
+                                  stops: [0.0, 0.4, 0.8, 1.0],
+                                ),
+                          // Add shadow that changes when pressed
+                          boxShadow: _isHoldingButton 
+                            ? [
+                                // Pressed/inset shadow effect
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  spreadRadius: -2,
+                                  offset: const Offset(0, -2),
+                                ),
+                              ]
+                            : [],
                         ),
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            // Glossy highlight overlay
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.center,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.4),
-                                Colors.white.withValues(alpha: 0.1),
-                                Colors.transparent,
-                              ],
-                              stops: const [0.0, 0.3, 1.0],
-                            ),
+                            // Glossy highlight overlay - changes when pressed
+                            gradient: _isHoldingButton
+                              ? LinearGradient(
+                                  begin: Alignment.bottomRight,
+                                  end: Alignment.topLeft,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.1),
+                                    Colors.black.withValues(alpha: 0.2),
+                                    Colors.black.withValues(alpha: 0.1),
+                                  ],
+                                  stops: const [0.0, 0.5, 1.0],
+                                )
+                              : LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.center,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.4),
+                                    Colors.white.withValues(alpha: 0.1),
+                                    Colors.transparent,
+                                  ],
+                                  stops: const [0.0, 0.3, 1.0],
+                                ),
                           ),
                           child: Material(
                             color: Colors.transparent,
@@ -584,13 +619,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               onTapDown: _isSendingSOS ? null : _startHoldTimer,
                               onTapUp: _isSendingSOS ? null : _cancelHoldTimer,
                               onTapCancel: _isSendingSOS ? null : _cancelHoldTimer,
-                              child: Container(
+                                child: Container(
                                 width: sosButtonSize,
                                 height: sosButtonSize,
+                                // Apply transform for pressed effect
+                                transform: _isHoldingButton 
+                                  ? (Matrix4.identity()..translate(2.0, 2.0)) // Slightly inset when pressed
+                                  : Matrix4.identity(),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.2),
+                                    color: _isHoldingButton 
+                                      ? Colors.white.withValues(alpha: 0.1) 
+                                      : Colors.white.withValues(alpha: 0.2),
                                     width: 1,
                                   ),
                                 ),
@@ -624,39 +665,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     : Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          if (_isHoldingButton) ...[
-                                            CircularProgressIndicator(
-                                              value: _holdProgress / 3.0,
+                                          Text(
+                                            'SOS',
+                                            style: TextStyle(
+                                              fontSize: sosButtonSize * 0.16, // Responsive font size
+                                              fontWeight: FontWeight.bold,
                                               color: AppTheme.pureWhite,
-                                              strokeWidth: 4,
+                                              letterSpacing: 2,
+                                              shadows: _isHoldingButton
+                                                ? const [
+                                                    Shadow(
+                                                      offset: Offset(0, -1),
+                                                      blurRadius: 3,
+                                                      color: Colors.black45,
+                                                    ),
+                                                  ]
+                                                : const [
+                                                    Shadow(
+                                                      offset: Offset(0, 2),
+                                                      blurRadius: 4,
+                                                      color: Colors.black26,
+                                                    ),
+                                                  ],
                                             ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              '${3 - _holdProgress}',
-                                              style: TextStyle(
-                                                fontSize: sosButtonSize * 0.12,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.pureWhite,
-                                              ),
-                                            ),
-                                          ] else ...[
-                                            Text(
-                                              'SOS',
-                                              style: TextStyle(
-                                                fontSize: sosButtonSize * 0.16, // Responsive font size
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.pureWhite,
-                                                letterSpacing: 2,
-                                                shadows: const [
-                                                  Shadow(
-                                                    offset: Offset(0, 2),
-                                                    blurRadius: 4,
-                                                    color: Colors.black26,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ],
                                       ),
                                 ),
