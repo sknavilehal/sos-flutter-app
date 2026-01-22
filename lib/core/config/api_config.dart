@@ -1,8 +1,8 @@
 class ApiConfig {
-  static const String _prodBaseUrl = 'https://us-central1-rrt-sos-app.cloudfunctions.net/api';
+  static const String _prodBaseUrl = 'https://us-central1-rapid-response-team-app.cloudfunctions.net/api';
   
   // Update this with your ngrok URL when testing on physical device
-  static const String _devBaseUrl= 'https://us-central1-rrt-sos-app.cloudfunctions.net/api';
+  static const String _devBaseUrl= 'https://us-central1-rapid-response-team-app.cloudfunctions.net/api';
   
   static String get baseUrl {
     // Check if we're in debug mode (development)
