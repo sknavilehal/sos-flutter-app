@@ -183,9 +183,8 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               Container(
                 width: double.infinity,
                 height: AppConstants.primaryButtonHeight,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.primaryBlack,
-                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: InkWell(
                   onTap: () async {

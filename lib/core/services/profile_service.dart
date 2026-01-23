@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProfileService {
   static const String _nameKey = 'user_name';
   static const String _mobileKey = 'user_mobile';
+  static const String _termsAcceptedKey = 'terms_accepted';
 
   /// Save user profile data
   static Future<void> saveProfile({
@@ -57,5 +58,17 @@ class ProfileService {
       return '+91 ${cleanMobile.substring(0, 5)} ${cleanMobile.substring(5)}';
     }
     return mobile;
+  }
+
+  /// Check if user has accepted terms and conditions
+  static Future<bool> hasAcceptedTerms() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_termsAcceptedKey) ?? false;
+  }
+
+  /// Set terms and conditions acceptance status
+  static Future<void> setTermsAccepted(bool accepted) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_termsAcceptedKey, accepted);
   }
 }

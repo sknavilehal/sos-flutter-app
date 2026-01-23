@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
-import 'profile_create_screen.dart';
+import 'terms_and_conditions_screen.dart';
 
 /// Onboarding/Welcome screen
 class OnboardingScreen extends StatelessWidget {
@@ -66,7 +66,7 @@ class OnboardingScreen extends StatelessWidget {
               
               // Description
               const Text(
-                'Grant location access to see alerts in your district and ensure help reaches you quickly.',
+                'For animal welfare, feeders, and volunteers. Find help, and reach out when in need.',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppTheme.primaryBlack,
@@ -82,15 +82,14 @@ class OnboardingScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 height: AppConstants.primaryButtonHeight,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.primaryBlack,
-                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileCreateScreen()),
+                      MaterialPageRoute(builder: (context) => const TermsAndConditionsScreen()),
                     );
                   },
                   child: const Row(

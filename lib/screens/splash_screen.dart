@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
             MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
           );
         } else {
-          // No profile, show onboarding
+          // No profile, start with onboarding
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const OnboardingScreen()),
@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
         }
       }
     } catch (e) {
-      // If there's an error reading profile, show onboarding
+      // If there's an error, show onboarding to be safe
       if (mounted) {
         Navigator.pushReplacement(
           context,

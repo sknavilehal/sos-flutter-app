@@ -480,9 +480,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Container(
                       width: double.infinity,
                       height: 56,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppTheme.primaryBlack,
-                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: InkWell(
                         onTap: _isSendingSOS ? null : _handleStopSOS,
