@@ -592,7 +592,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 height: sosButtonSize,
                                 // Apply transform for pressed effect
                                 transform: _isHoldingButton 
-                                  ? (Matrix4.identity()..translateByDouble(2.0, 2.0, 0.0)) // Slightly inset when pressed
+                                  ? Matrix4.translationValues(2.0, 2.0, 0.0) // Slightly inset when pressed
                                   : Matrix4.identity(),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
