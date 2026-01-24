@@ -9,11 +9,6 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return GeolocatorLocationService();
 });
 
-/// FCM service provider
-final fcmServiceProvider = Provider<FCMService>((ref) {
-  return FCMService();
-});
-
 /// Location state notifier for managing district changes
 class LocationStateNotifier extends StateNotifier<AsyncValue<String?>> {
   LocationStateNotifier(this._locationService, this._fcmService) 

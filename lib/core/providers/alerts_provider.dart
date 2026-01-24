@@ -118,11 +118,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     await _saveAlertsToStorage();
   }
 
-  /// Clear all active alerts (for testing or reset purposes)
-  Future<void> clearAllAlerts() async {
-    state = [];
-    await _saveAlertsToStorage();
-  }
 }
 
 /// Provider for accessing active SOS alerts throughout the app

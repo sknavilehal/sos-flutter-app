@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/providers/location_provider.dart';
 import '../core/config/api_config.dart';
 import '../core/services/location_service.dart';
 
