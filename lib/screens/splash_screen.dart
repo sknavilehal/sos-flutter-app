@@ -3,6 +3,7 @@ import '../core/theme/app_theme.dart';
 import '../core/services/profile_service.dart';
 import 'onboarding_screen.dart';
 import 'main_navigation_screen.dart';
+import '../widgets/rrt_branding.dart';
 
 /// Splash screen that checks profile status and routes accordingly
 class SplashScreen extends StatefulWidget {
@@ -64,31 +65,19 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // App Logo
-              Icon(
-                Icons.pets,
+              const RrtLogo(
                 size: 80,
-                color: AppTheme.primaryBlack,
+                iconSize: 80,
+                showBorder: false,
               ),
               SizedBox(height: 24),
               
               // App Title
-              Text(
-                'Rapid',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlack,
-                  height: 1.1,
-                ),
-              ),
-              Text(
-                'Response Team',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w300,
-                  color: AppTheme.neutralGrey,
-                  height: 1.1,
-                ),
+              const RrtWordmark(
+                titleSize: 40,
+                subtitleSize: 40,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                textAlign: TextAlign.center,
               ),
               
               SizedBox(height: 40),
