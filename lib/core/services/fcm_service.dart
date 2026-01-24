@@ -31,46 +31,28 @@ class FCMService {
         _fcmToken = await _firebaseMessaging!.getToken()
             .timeout(const Duration(seconds: 5));
 
-        if (kDebugMode) {
-          debugPrint('FCMService: Initialized successfully for topic management');
-        }
-      } else {
-        if (kDebugMode) {
-          debugPrint('Firebase not available - FCM features disabled');
-        }
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Failed to initialize FCM: $e');
-      }
+      debugPrint('FCM initialization failed: $e');
     }
   }
 
   /// Subscribe to district topic
   Future<void> subscribeToDistrictTopic(String district) async {
-    print('FCMService: subscribeToDistrictTopic called with: $district');
-    
     if (!_isFirebaseAvailable || _firebaseMessaging == null) {
-      print('FCMService: Firebase not available for topic subscription');
-      if (kDebugMode) {
-        debugPrint('Firebase not available - cannot subscribe to district topic: $district');
-      }
       return;
     }
     
     try {
       final topicName = 'district-$district';
-      print('FCMService: Topic name: $topicName');
       
       // Unsubscribe from previous topic if exists
       if (_currentTopic != null && _currentTopic != topicName) {
-        print('FCMService: Unsubscribing from previous topic: $_currentTopic');
         try {
           await _firebaseMessaging!.unsubscribeFromTopic(_currentTopic!)
               .timeout(const Duration(seconds: 3));
-          print('FCMService: Successfully unsubscribed from: $_currentTopic');
         } catch (e) {
-          print('FCMService: Unsubscribe timeout/error (continuing): $e');
+          debugPrint('FCM unsubscribe failed: $e');
         }
       }
       
@@ -81,7 +63,6 @@ class FCMService {
       
       while (!subscribed && attempts < maxAttempts) {
         attempts++;
-        print('FCMService: Subscribe attempt $attempts/$maxAttempts for: $topicName');
         
         try {
           await _firebaseMessaging!.subscribeToTopic(topicName)
@@ -89,25 +70,18 @@ class FCMService {
           
           _currentTopic = topicName;
           subscribed = true;
-          print('FCMService: Successfully subscribed to: $topicName');
           
         } catch (e) {
-          print('FCMService: Subscribe attempt $attempts failed: $e');
-          if (attempts >= maxAttempts) {
-            print('FCMService: All subscription attempts failed, giving up');
-          }
           // Wait a bit before retry
           await Future.delayed(const Duration(milliseconds: 500));
         }
       }
       
-      if (kDebugMode && subscribed) {
-        debugPrint('Subscribed to topic: $topicName');
+      if (!subscribed) {
+        debugPrint('FCM subscribe failed for topic: $topicName');
       }
     } catch (e) {
-      print('FCMService: Error in subscribeToDistrictTopic: $e');
-      print('FCMService: Error type: ${e.runtimeType}');
-      debugPrint('Error subscribing to district topic: $e');
+      debugPrint('FCM subscribe failed: $e');
       // Don't rethrow - let the app continue
     }
   }
@@ -115,36 +89,27 @@ class FCMService {
   /// Unsubscribe from current district topic
   Future<void> unsubscribeFromCurrentTopic() async {
     if (!_isFirebaseAvailable || _firebaseMessaging == null) {
-      if (kDebugMode) {
-        debugPrint('Firebase not available - cannot unsubscribe from topic');
-      }
       return;
     }
 
     if (_currentTopic != null) {
       try {
-        print('FCMService: Unsubscribing from current topic: $_currentTopic');
         await _firebaseMessaging!.unsubscribeFromTopic(_currentTopic!);
         _currentTopic = null;
-        print('FCMService: Successfully unsubscribed from topic');
       } catch (e) {
-        print('FCMService: Error unsubscribing from topic: $e');
+        debugPrint('FCM unsubscribe failed: $e');
       }
     }
   }
 
   /// Request notification permissions
   Future<void> _requestNotificationPermissions() async {
-    final settings = await _firebaseMessaging!.requestPermission(
+    await _firebaseMessaging!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
       provisional: false,
     );
-
-    if (kDebugMode) {
-      debugPrint('Notification permission status: ${settings.authorizationStatus}');
-    }
   }
 
   /// Get FCM token for this device

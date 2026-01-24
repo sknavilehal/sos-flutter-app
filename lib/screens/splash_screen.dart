@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // App Logo
-              const RrtLogo(
+              RrtLogo(
                 size: 80,
                 iconSize: 80,
                 showBorder: false,
@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> {
               SizedBox(height: 24),
               
               // App Title
-              const RrtWordmark(
+              RrtWordmark(
                 titleSize: 40,
                 subtitleSize: 40,
                 crossAxisAlignment: CrossAxisAlignment.center,

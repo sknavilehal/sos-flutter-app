@@ -95,10 +95,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _isStateLoaded = true;
         });
         
-        print('SOS State loaded: active=$isActive, sosId=$sosId, location=$location');
       }
     } catch (e) {
-      print('Error loading SOS state: $e');
+      debugPrint('SOS state load failed: $e');
       if (mounted) {
         setState(() {
           _isStateLoaded = true;
@@ -123,7 +122,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await prefs.remove('active_location');
       }
     } catch (e) {
-      print('Error saving SOS state: $e');
+      debugPrint('SOS state save failed: $e');
     }
   }
 
@@ -593,7 +592,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 height: sosButtonSize,
                                 // Apply transform for pressed effect
                                 transform: _isHoldingButton 
-                                  ? (Matrix4.identity()..translate(2.0, 2.0)) // Slightly inset when pressed
+                                  ? (Matrix4.identity()..translateByDouble(2.0, 2.0, 0.0, 1.0)) // Slightly inset when pressed
                                   : Matrix4.identity(),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
@@ -819,30 +818,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
 
       if (response.success) {
-        if (mounted) {
-          // Activate SOS state
-          setState(() {
-            _isSOSActive = true;
-            _activeSosId = sosId;
-          });
-          
-          // Get current address for display
-          final address = await locationService.getCurrentAddress();
-          setState(() {
-            _activeLocation = address ?? 'Emergency Location';
-          });
-          
-          // Save state to persistence
-          await _saveSOSState();
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Emergency alert sent successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        }
+        if (!mounted) return;
+        // Activate SOS state
+        setState(() {
+          _isSOSActive = true;
+          _activeSosId = sosId;
+        });
+        
+        // Get current address for display
+        final address = await locationService.getCurrentAddress();
+        if (!mounted) return;
+        setState(() {
+          _activeLocation = address ?? 'Emergency Location';
+        });
+        
+        // Save state to persistence
+        await _saveSOSState();
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Emergency alert sent successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
+          ),
+        );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -930,25 +930,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
 
       if (response.success) {
-        if (mounted) {
-          // Deactivate SOS state
-          setState(() {
-            _isSOSActive = false;
-            _activeSosId = null;
-            _activeLocation = null;
-          });
-          
-          // Clear saved state
-          await _saveSOSState();
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Emergency alert stopped successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
+        if (!mounted) return;
+        // Deactivate SOS state
+        setState(() {
+          _isSOSActive = false;
+          _activeSosId = null;
+          _activeLocation = null;
+        });
+        
+        // Clear saved state
+        await _saveSOSState();
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Emergency alert stopped successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -9,25 +9,18 @@ class GeolocatorLocationService implements LocationService {
   @override
   Future<LocationData?> getCurrentLocation() async {
     try {
-      debugPrint('Getting current location...');
-      
       // Check permissions and services
       if (!await hasLocationPermission()) {
-        debugPrint('No location permission, requesting...');
         final permissionGranted = await requestLocationPermission();
         if (!permissionGranted) {
-          debugPrint('Location permission denied');
           return null;
         }
-        debugPrint('Location permission granted');
       }
 
       if (!await isLocationServiceEnabled()) {
-        debugPrint('Location service not enabled');
         return null;
       }
 
-      debugPrint('Getting position with geolocator...');
       // Get current position with updated settings
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -36,42 +29,37 @@ class GeolocatorLocationService implements LocationService {
         ),
       );
 
-      debugPrint('Position received: ${position.latitude}, ${position.longitude}');
       return LocationData(
         latitude: position.latitude,
         longitude: position.longitude,
       );
     } catch (e) {
-      debugPrint('Error getting current location: $e');
+      debugPrint('Failed to get current location: $e');
       return null;
     }
   }
 
   @override
   Future<String?> getDistrictFromCoordinates(double latitude, double longitude) async {
-    debugPrint('District discovery moved to backend - this method is deprecated');
     return null;
   }
 
   @override
   Future<String?> getCurrentDistrict() async {
-    debugPrint('District discovery moved to backend - this method is deprecated');
     return null;
   }
 
   @override
   Future<String?> getCurrentAddress() async {
     try {
-      debugPrint('Getting current address...');
       final location = await getCurrentLocation();
       if (location == null) {
-        debugPrint('No location available for address lookup');
         return null;
       }
       
       return await getAddressFromCoordinates(location.latitude, location.longitude);
     } catch (e) {
-      debugPrint('Error getting current address: $e');
+      debugPrint('Failed to get current address: $e');
       return null;
     }
   }
@@ -79,8 +67,6 @@ class GeolocatorLocationService implements LocationService {
   @override
   Future<String?> getAddressFromCoordinates(double latitude, double longitude) async {
     try {
-      debugPrint('Getting address from coordinates: $latitude, $longitude');
-      
       final placemarks = await placemarkFromCoordinates(latitude, longitude);
       
       if (placemarks.isNotEmpty) {
@@ -103,13 +89,12 @@ class GeolocatorLocationService implements LocationService {
         }
         
         final address = addressComponents.join(', ');
-        debugPrint('Address found: $address');
         return address.isNotEmpty ? address : 'Unknown location';
       }
       
       return 'Unknown location';
     } catch (e) {
-      debugPrint('Error getting address from coordinates: $e');
+      debugPrint('Failed to resolve address: $e');
       return 'Address unavailable';
     }
   }

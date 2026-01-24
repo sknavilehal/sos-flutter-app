@@ -14,8 +14,6 @@ class DistrictSubscriptionService {
   /// Get district information from backend based on coordinates
   Future<String?> getDistrictFromLocation(double latitude, double longitude) async {
     try {
-      debugPrint('🗺️ Getting district for coordinates: ($latitude, $longitude)');
-      
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/get-district'),
         headers: {'Content-Type': 'application/json'},
@@ -25,21 +23,18 @@ class DistrictSubscriptionService {
         }),
       );
 
-      debugPrint('District API Response: ${response.statusCode} - ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['district'] != null) {
           final district = data['district'] as String;
-          debugPrint('✅ District determined: $district');
           return district;
         }
+        return null;
       }
-      
-      debugPrint('❌ Failed to get district: ${response.body}');
+      debugPrint('District lookup failed: ${response.statusCode}');
       return null;
     } catch (e) {
-      debugPrint('❌ District lookup error: $e');
+      debugPrint('District lookup failed: $e');
       return null;
     }
   }
@@ -48,23 +43,16 @@ class DistrictSubscriptionService {
   Future<bool> subscribeToDistrict(String district) async {
     try {
       final topic = 'district-$district';
-      debugPrint('📱 Subscribing to FCM topic: $topic');
-      
-      debugPrint('🔄 Calling FirebaseMessaging.subscribeToTopic...');
       await FirebaseMessaging.instance.subscribeToTopic(topic);
-      debugPrint('✅ FirebaseMessaging.subscribeToTopic completed successfully');
       
       // Save subscription info
-      debugPrint('💾 Saving subscription info to SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastDistrictKey, district);
       await prefs.setInt(_lastSubscriptionTimeKey, DateTime.now().millisecondsSinceEpoch);
-      debugPrint('💾 Subscription info saved successfully');
       
-      print('✅ Successfully subscribed to district: $district');
       return true;
     } catch (e) {
-      print('❌ Failed to subscribe to district $district: $e');
+      debugPrint('District subscribe failed for $district: $e');
       return false;
     }
   }
@@ -73,16 +61,10 @@ class DistrictSubscriptionService {
   Future<bool> unsubscribeFromDistrict(String district) async {
     try {
       final topic = 'district-$district';
-      print('📱 Unsubscribing from FCM topic: $topic');
-      
-      debugPrint('🔄 Calling FirebaseMessaging.unsubscribeFromTopic...');
       await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
-      debugPrint('✅ FirebaseMessaging.unsubscribeFromTopic completed successfully');
-      
-      print('✅ Successfully unsubscribed from district: $district');
       return true;
     } catch (e) {
-      print('❌ Failed to unsubscribe from district $district: $e');
+      debugPrint('District unsubscribe failed for $district: $e');
       return false;
     }
   }
@@ -90,13 +72,11 @@ class DistrictSubscriptionService {
   /// Get the last subscribed district from preferences
   Future<String?> getLastSubscribedDistrict() async {
     try {
-      debugPrint('📂 Getting last subscribed district from SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
       final lastDistrict = prefs.getString(_lastDistrictKey);
-      debugPrint('📂 Last subscribed district: ${lastDistrict ?? "none"}');
       return lastDistrict;
     } catch (e) {
-      print('❌ Failed to get last subscribed district: $e');
+      debugPrint('Failed to read last district: $e');
       return null;
     }
   }
@@ -113,7 +93,7 @@ class DistrictSubscriptionService {
       
       return (now - lastTime) < oneHourInMs;
     } catch (e) {
-      debugPrint('❌ Failed to check subscription time: $e');
+      debugPrint('Failed to check subscription time: $e');
       return false;
     }
   }
@@ -121,22 +101,16 @@ class DistrictSubscriptionService {
   /// Main function to update district subscription based on current location
   Future<bool> updateDistrictSubscription(LocationService locationService) async {
     try {
-      debugPrint('🔄 Updating district subscription...');
-      
       // Check if we have a recent subscription to avoid frequent updates
       if (await isSubscriptionRecent()) {
-        debugPrint('📍 District subscription is recent, skipping update');
         return true;
       }
       
       // Get current location
-      debugPrint('📍 Getting current location for district subscription...');
       final locationData = await locationService.getCurrentLocation();
       if (locationData == null) {
-        debugPrint('❌ Cannot get current location for district subscription');
         return false;
       }
-      debugPrint('📍 Location obtained: (${locationData.latitude}, ${locationData.longitude})');
       
       // Get district from backend
       final newDistrict = await getDistrictFromLocation(
@@ -145,60 +119,40 @@ class DistrictSubscriptionService {
       );
       
       if (newDistrict == null) {
-        debugPrint('❌ Cannot determine district from location');
         return false;
       }
       
       // Check if we need to change subscription
-      debugPrint('🔍 Checking if subscription needs to be changed...');
       final lastDistrict = await getLastSubscribedDistrict();
-      debugPrint('🔍 Comparison: Last="${lastDistrict ?? "none"}", New="$newDistrict"');
       
       if (lastDistrict == newDistrict) {
-        debugPrint('📍 Already subscribed to correct district: $newDistrict');
         // Update timestamp to mark as recent
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_lastSubscriptionTimeKey, DateTime.now().millisecondsSinceEpoch);
-        debugPrint('⏰ Updated subscription timestamp');
         return true;
       }
       
       // Unsubscribe from old district if exists
       if (lastDistrict != null) {
-        debugPrint('🔄 Unsubscribing from old district: $lastDistrict');
         await unsubscribeFromDistrict(lastDistrict);
       }
       
       // Subscribe to new district
       final subscribed = await subscribeToDistrict(newDistrict);
       
-      if (subscribed) {
-        debugPrint('✅ District subscription updated successfully: $newDistrict');
-        return true;
-      } else {
-        debugPrint('❌ Failed to subscribe to new district: $newDistrict');
-        return false;
-      }
+      return subscribed;
       
     } catch (e) {
-      debugPrint('❌ District subscription update error: $e');
+      debugPrint('District subscription update failed: $e');
       return false;
     }
   }
   
   /// Initialize district subscription on app start
   Future<void> initializeDistrictSubscription(LocationService locationService) async {
-    debugPrint('🚀 Initializing district subscription...');
-    
     // Wait a bit to ensure location services are ready
     await Future.delayed(const Duration(seconds: 2));
     
-    final success = await updateDistrictSubscription(locationService);
-    
-    if (success) {
-      debugPrint('✅ District subscription initialized successfully');
-    } else {
-      debugPrint('⚠️ District subscription initialization failed, will retry later');
-    }
+    await updateDistrictSubscription(locationService);
   }
 }
