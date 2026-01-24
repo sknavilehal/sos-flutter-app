@@ -9,6 +9,7 @@ import '../core/providers/location_provider.dart';
 import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
 import '../services/district_subscription_service.dart';
+import '../widgets/rrt_branding.dart';
 
 /// Home screen with location display and SOS button
 class HomeScreen extends ConsumerStatefulWidget {
@@ -142,21 +143,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 8),
               
               // App Header
-              Row(
+              const Row(
                 children: [
-                  Container(
-                    width: AppConstants.brandIconSize,
-                    height: AppConstants.brandIconSize,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.primaryBlack, width: 1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.pets,
-                      size: 24,
-                      color: AppTheme.primaryBlack,
-                    ),
-                  ),
+                  RrtLogo(),
                 ],
               ),
               
@@ -165,28 +154,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // App Title
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Rapid',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryBlack,
-                        height: 1.1,
-                      ),
-                    ),
-                    Text(
-                      'Response Team',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w300,
-                        color: AppTheme.neutralGrey,
-                        height: 1.1,
-                      ),
-                    ),
-                  ],
+                child: RrtWordmark(
+                  titleSize: 32,
+                  subtitleSize: 32,
                 ),
               ),
               

@@ -3,6 +3,10 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
 import 'main_navigation_screen.dart';
+import '../widgets/labeled_text_field.dart';
+import '../widgets/rrt_branding.dart';
+import '../widgets/rrt_footer_badges.dart';
+import '../widgets/rrt_primary_button.dart';
 
 /// Profile creation screen for first-time setup
 class ProfileCreateScreen extends StatefulWidget {
@@ -36,41 +40,14 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               const SizedBox(height: AppConstants.iconTopMargin),
               
               // App Logo/Icon
-              Container(
-                width: AppConstants.brandIconSize,
-                height: AppConstants.brandIconSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.primaryBlack, width: 1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.pets,
-                  size: 24,
-                  color: AppTheme.primaryBlack,
-                ),
-              ),
+              const RrtLogo(),
               
               const SizedBox(height: AppConstants.iconBrandSpacing),
               
               // App Title
-              const Text(
-                'Rapid',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlack,
-                  height: 1.1,
-                ),
-              ),
-              
-              const Text(
-                'Response Team',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w300,
-                  color: AppTheme.neutralGrey,
-                  height: 1.1,
-                ),
+              const RrtWordmark(
+                titleSize: 40,
+                subtitleSize: 40,
               ),
               
               const SizedBox(height: AppConstants.brandBodySpacing),
@@ -89,69 +66,27 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               const SizedBox(height: AppConstants.fieldSpacing),
               
               // Name Field
-              const Text(
-                'NAME',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.neutralGrey,
-                  letterSpacing: 0.1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
+              LabeledTextField(
+                label: 'NAME',
                 controller: _nameController,
-                style: const TextStyle(
+                textStyle: const TextStyle(
                   fontSize: 18,
                   color: AppTheme.primaryBlack,
-                ),
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
               
               const SizedBox(height: AppConstants.fieldSpacing),
               
               // Mobile Number Field
-              const Text(
-                'MOBILE NUMBER',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.neutralGrey,
-                  letterSpacing: 0.1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
+              LabeledTextField(
+                label: 'MOBILE NUMBER',
                 controller: _mobileController,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: AppTheme.primaryBlack,
-                ),
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryBlack, width: 1),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                counterText: '',
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  color: AppTheme.primaryBlack,
                 ),
               ),
               
@@ -180,117 +115,72 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               const SizedBox(height: 60),
               
               // Save & Proceed Button
-              Container(
-                width: double.infinity,
+              RrtPrimaryButton(
+                label: 'SAVE & PROCEED',
                 height: AppConstants.primaryButtonHeight,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryBlack,
-                ),
-                child: InkWell(
-                  onTap: () async {
-                    final name = _nameController.text.trim();
-                    final mobile = _mobileController.text.trim();
-                    
-                    if (name.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your name'),
-                          backgroundColor: AppTheme.errorColor,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    if (mobile.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your mobile number'),
-                          backgroundColor: AppTheme.errorColor,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    if (!ProfileService.isValidIndianMobile(mobile)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid 10-digit mobile number'),
-                          backgroundColor: AppTheme.errorColor,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    try {
-                      await ProfileService.saveProfile(
-                        name: name,
-                        mobile: mobile,
-                      );
-                      
-                      if (context.mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to save profile. Please try again.'),
-                            backgroundColor: AppTheme.errorColor,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'SAVE & PROCEED',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.2,
-                        ),
+                onTap: () async {
+                  final name = _nameController.text.trim();
+                  final mobile = _mobileController.text.trim();
+                  
+                  if (name.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter your name'),
+                        backgroundColor: AppTheme.errorColor,
                       ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 20,
+                    );
+                    return;
+                  }
+                  
+                  if (mobile.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter your mobile number'),
+                        backgroundColor: AppTheme.errorColor,
                       ),
-                    ],
-                  ),
-                ),
+                    );
+                    return;
+                  }
+                  
+                  if (!ProfileService.isValidIndianMobile(mobile)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid 10-digit mobile number'),
+                        backgroundColor: AppTheme.errorColor,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  try {
+                    await ProfileService.saveProfile(
+                      name: name,
+                      mobile: mobile,
+                    );
+                    
+                    if (context.mounted) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to save profile. Please try again.'),
+                          backgroundColor: AppTheme.errorColor,
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
               
               const SizedBox(height: 40),
               
               // Footer
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    'SECURE ACCESS',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  Text(
-                    'PRIVACY ENSURED',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
+              const RrtFooterBadges(),
               
               const SizedBox(height: 30),
             ],

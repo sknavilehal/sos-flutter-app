@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/providers/alerts_provider.dart';
 import '../core/providers/location_provider.dart';
+import '../widgets/rrt_branding.dart';
 
 /// Alerts screen showing nearby SOS situations
 /// Watches activeAlertsProvider to display real-time emergency alerts
@@ -66,21 +67,9 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   const SizedBox(height: 8),
                   
                   // App Header
-                  Align(
+                  const Align(
                     alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: AppConstants.brandIconSize,
-                      height: AppConstants.brandIconSize,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.primaryBlack, width: 1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.pets,
-                        size: 24,
-                        color: AppTheme.primaryBlack,
-                      ),
-                    ),
+                    child: RrtLogo(),
                   ),
                   
                   const SizedBox(height: 8),
@@ -88,28 +77,9 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   // App Title
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Rapid',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlack,
-                            height: 1.1,
-                          ),
-                        ),
-                        Text(
-                          'Response Team',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w300,
-                            color: AppTheme.neutralGrey,
-                            height: 1.1,
-                          ),
-                        ),
-                      ],
+                    child: RrtWordmark(
+                      titleSize: 32,
+                      subtitleSize: 32,
                     ),
                   ),
                   

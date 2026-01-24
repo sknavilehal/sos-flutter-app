@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/services/profile_service.dart';
 import 'profile_create_screen.dart';
+import '../widgets/rrt_branding.dart';
+import '../widgets/rrt_primary_button.dart';
 
 /// Terms and Conditions screen shown once on first app launch
 class TermsAndConditionsScreen extends StatefulWidget {
@@ -46,39 +48,20 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
               child: Column(
                 children: [
                   // App Logo
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.primaryBlack, width: 2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Icon(
-                      Icons.pets,
-                      size: 32,
-                      color: AppTheme.primaryBlack,
-                    ),
+                  const RrtLogo(
+                    size: 64,
+                    iconSize: 32,
+                    borderWidth: 2,
+                    borderRadius: 4,
                   ),
                   const SizedBox(height: 32),
                   
                   // App Title
-                  const Text(
-                    'Rapid',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlack,
-                      height: 1.1,
-                    ),
-                  ),
-                  const Text(
-                    'Response Team',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w300,
-                      color: AppTheme.neutralGrey,
-                      height: 1.1,
-                    ),
+                  const RrtWordmark(
+                    titleSize: 32,
+                    subtitleSize: 32,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
                   
@@ -186,33 +169,13 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Accept Button
-              SizedBox(
-                width: double.infinity,
+              RrtPrimaryButton(
+                label: 'ACCEPT',
                 height: 56,
-                child: ElevatedButton(
-                  onPressed: _acceptTerms,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryBlack,
-                    foregroundColor: AppTheme.pureWhite,
-                    shape: const RoundedRectangleBorder(),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'ACCEPT',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.arrow_forward, size: 20),
-                    ],
-                  ),
-                ),
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.5,
+                iconSpacing: 16,
+                onTap: _acceptTerms,
               ),
               const SizedBox(height: 16),
               
