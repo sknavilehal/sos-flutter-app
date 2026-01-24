@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -51,8 +52,6 @@ class HTTPSOSService implements SOSService {
         'sender_id': senderId, // Include sender ID for client-side filtering
       };
 
-      print('📤 Sending SOS request: $sosData'); // Debug log
-
       final response = await http.post(
         Uri.parse(ApiConfig.sosEndpoint),
         headers: {
@@ -64,14 +63,13 @@ class HTTPSOSService implements SOSService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('✅ Backend response: $data'); // Debug log
         return SOSResponse.success(
           messageId: data['messageId']?.toString() ?? data['sosId']?.toString() ?? 'unknown',
           topic: data['topic']?.toString() ?? 'unknown',
           message: data['message']?.toString() ?? 'SOS alert processed successfully',
         );
       } else {
-        print('❌ Backend error response: ${response.statusCode} - ${response.body}'); // Debug log
+        debugPrint('SOS request failed: ${response.statusCode}');
         final errorData = json.decode(response.body);
         return SOSResponse.error(
           error: errorData['error'] ?? 'Unknown error',
@@ -79,7 +77,7 @@ class HTTPSOSService implements SOSService {
         );
       }
     } catch (e) {
-      print('❌ SOS Service Exception: $e'); // Debug log
+      debugPrint('SOS request failed: $e');
       String errorMessage = 'Failed to send SOS alert';
       if (e.toString().contains('TimeoutException')) {
         errorMessage = 'Request timeout. Please check your connection and backend server.';
@@ -99,8 +97,6 @@ class HTTPSOSService implements SOSService {
   @override
   Future<bool> testConnection() async {
     try {
-      print('🔍 Testing backend connection...');
-      
       final response = await http.get(
         Uri.parse(ApiConfig.healthEndpoint),
         headers: {'Accept': 'application/json'},
@@ -108,14 +104,12 @@ class HTTPSOSService implements SOSService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('✅ Backend connected: ${data['status']}');
-        print('Firebase status: ${data['firebase']}');
         return data['status'] == 'ok';
       }
       
       return false;
     } catch (e) {
-      print('❌ Backend connection failed: $e');
+      debugPrint('Backend health check failed: $e');
       return false;
     }
   }

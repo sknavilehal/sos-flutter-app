@@ -22,7 +22,6 @@ class NotificationService {
   /// Initialize the notification service with navigation key and Riverpod ref
   /// Called from main.dart to set up navigation and state management access
   static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey, WidgetRef ref) async {
-    debugPrint('🔔 NotificationService: Initializing...');
     _navigatorKey = navigatorKey;
     _ref = ref;
     
@@ -30,13 +29,11 @@ class NotificationService {
       await _initializeLocalNotifications();
       _setupMessageHandlers();
       _initialized = true;
-      debugPrint('🔔 NotificationService: Initialization complete');
     }
   }
   
   /// Initialize local notifications
   static Future<void> _initializeLocalNotifications() async {
-    debugPrint('🔔 NotificationService: Setting up local notifications...');
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -53,50 +50,36 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
-    debugPrint('🔔 NotificationService: Local notifications initialized');
   }
   
   /// Setup FCM message handlers
   static void _setupMessageHandlers() {
-    debugPrint('🔔 NotificationService: Setting up FCM message handlers...');
-    
     try {
       // Handle messages when app is in foreground
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('🔔 NotificationService: Received foreground message: ${message.messageId}');
         _handleForegroundMessageWithNotification(message);
       });
       
       // Handle messages when app is in background but not terminated
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('🔔 NotificationService: App opened from background message: ${message.messageId}');
         handleNotificationTap(message);
       });
       
       // ✅ Handle messages when app is opened from terminated state
       handleTerminatedMessage();
-      
-      debugPrint('🔔 NotificationService: FCM message handlers set up successfully');
     } catch (e) {
-      debugPrint('🔔 NotificationService: Error setting up message handlers: $e');
+      debugPrint('Notification handler setup failed: $e');
     }
   }
 
   /// Handle foreground messages with local notification display
   static Future<void> _handleForegroundMessageWithNotification(RemoteMessage message) async {
-    debugPrint('🔔 NotificationService: Processing foreground message...');
-    debugPrint('🔔 NotificationService: Message data: ${message.data}');
-    debugPrint('🔔 NotificationService: Message title: ${message.notification?.title}');
-    debugPrint('🔔 NotificationService: Message body: ${message.notification?.body}');
-    
     // ✅ Client-side filtering: Check if this is a self-sent SOS alert
     final messageSenderId = message.data['sender_id'];
     if (messageSenderId != null) {
       final currentUserId = await UserIdService.getUserId();
       
       if (messageSenderId == currentUserId) {
-        debugPrint('🚫 NotificationService: Completely filtering out self-sent SOS alert (sender: $messageSenderId)');
-        debugPrint('🚫 NotificationService: Self-alert wRill NOT be added to alerts screen or shown as notification');
         // Process the message data first
         
         return;
@@ -112,8 +95,6 @@ class NotificationService {
   
   /// Show local notification for foreground messages
   static Future<void> _showLocalNotification(RemoteMessage message) async {
-    debugPrint('🔔 NotificationService: Showing local notification...');
-    
     const androidDetails = AndroidNotificationDetails(
       'sos_alerts',
       'SOS Alerts',
@@ -138,9 +119,6 @@ class NotificationService {
       final title = message.notification?.title ?? 'SOS Alert';
       final body = message.notification?.body ?? message.data['message'] ?? 'Emergency alert in your area';
       
-      debugPrint('🔔 NotificationService: Notification title: $title');
-      debugPrint('🔔 NotificationService: Notification body: $body');
-      
       await _localNotifications.show(
         message.hashCode,
         title,
@@ -148,17 +126,13 @@ class NotificationService {
         notificationDetails,
         payload: message.data.toString(),
       );
-      
-      debugPrint('🔔 NotificationService: Local notification displayed successfully');
     } catch (e) {
-      debugPrint('🔔 NotificationService: Error showing local notification: $e');
+      debugPrint('Local notification failed: $e');
     }
   }
   
   /// Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
-    debugPrint('🔔 NotificationService: Notification tapped: ${response.payload}');
-    
     // Navigate to alerts screen
     _navigatorKey?.currentState?.pushNamed('/alerts');
   }
@@ -283,27 +257,18 @@ class NotificationService {
   /// Handle foreground messages (when app is open and visible)
   /// Shows in-app notifications and processes the data
   static Future<void> handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('🔔 NotificationService: handleForegroundMessage called');
-    debugPrint('🔔 NotificationService: Processing message data...');
-    
     // Process the message data
     await _handleMessageData(message.data);
-    
-    debugPrint('🔔 NotificationService: Foreground message processing complete');
   }
 
   /// Handle background messages (when app is minimized or closed)
   /// This is called by the top-level function registered in main.dart
   static Future<void> handleBackgroundMessage(RemoteMessage message) async {
-    debugPrint('🔔 NotificationService: handleBackgroundMessage called');
-    debugPrint('🔔 NotificationService: Background message data: ${message.data}');
-    
     // Process the background message data
     try {
       await _handleMessageData(message.data);
-      debugPrint('🔔 NotificationService: Background message processing complete');
     } catch (e) {
-      debugPrint('🔔 NotificationService: Error processing background message: $e');
+      debugPrint('Background message handling failed: $e');
     }
   }
 
@@ -321,15 +286,12 @@ class NotificationService {
     try {
       final message = await FirebaseMessaging.instance.getInitialMessage();
       if (message != null) {
-        debugPrint('🔔 NotificationService: App opened from terminated state with message: ${message.messageId}');
-        
         // Check for sender filtering
         final messageSenderId = message.data['sender_id'];
         if (messageSenderId != null) {
           final currentUserId = await UserIdService.getUserId();
           
           if (messageSenderId == currentUserId) {
-            debugPrint('🚫 NotificationService: Filtering out self-sent alert from terminated state');
             return;
           }
         }
@@ -337,7 +299,7 @@ class NotificationService {
         await handleNotificationTap(message);
       }
     } catch (e) {
-      debugPrint('🔔 NotificationService: Error handling terminated message: $e');
+      debugPrint('Terminated message handling failed: $e');
     }
   }
 

@@ -95,10 +95,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _isStateLoaded = true;
         });
         
-        print('SOS State loaded: active=$isActive, sosId=$sosId, location=$location');
       }
     } catch (e) {
-      print('Error loading SOS state: $e');
+      debugPrint('SOS state load failed: $e');
       if (mounted) {
         setState(() {
           _isStateLoaded = true;
@@ -123,7 +122,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await prefs.remove('active_location');
       }
     } catch (e) {
-      print('Error saving SOS state: $e');
+      debugPrint('SOS state save failed: $e');
     }
   }
 
