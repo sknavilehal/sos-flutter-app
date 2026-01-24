@@ -33,7 +33,6 @@ dependencies:
 
   # Core Dependencies
   firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
   firebase_messaging: ^15.1.3
   
   # Location & HTTP
@@ -43,17 +42,14 @@ dependencies:
   
   # State Management & Navigation
   flutter_riverpod: ^2.5.1
-  go_router: ^14.6.2
   
   # Local Storage
-  sqflite: ^2.4.0
   shared_preferences: ^2.2.2
   
   # Local Notifications (for foreground FCM)
   flutter_local_notifications: ^18.0.1
   
   # Permissions & URL Launcher
-  permission_handler: ^11.3.1
   url_launcher: ^6.3.1
 
   # The following adds the Cupertino Icons font to your application.

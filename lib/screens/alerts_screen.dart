@@ -129,32 +129,8 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                 },
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                  itemCount: alerts.length, // Debug button commented out
+                  itemCount: alerts.length,
                   itemBuilder: (context, index) {
-                    // Last item is debug clear button
-                    // if (index == alerts.length) {
-                    //   return Container(
-                    //     margin: const EdgeInsets.only(bottom: 16),
-                    //     child: ElevatedButton(
-                    //       onPressed: () async {
-                    //         await ref.read(activeAlertsProvider.notifier).clearAllAlerts();
-                    //         ScaffoldMessenger.of(context).showSnackBar(
-                    //           const SnackBar(
-                    //             content: Text('✅ All alerts cleared'),
-                    //             backgroundColor: Colors.green,
-                    //           ),
-                    //         );
-                    //       },
-                    //       style: ElevatedButton.styleFrom(
-                    //         backgroundColor: Colors.red.shade100,
-                    //         foregroundColor: Colors.red.shade700,
-                    //         side: BorderSide(color: Colors.red.shade300),
-                    //       ),
-                    //       child: const Text('🗑️ Clear All Alerts (Debug)'),
-                    //     ),
-                    //   );
-                    // }
-                    
                     // Real alerts
                     final alert = alerts[index];
                     

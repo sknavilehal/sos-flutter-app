@@ -181,14 +181,8 @@ class NotificationService {
   /// Process FCM message data and update app state accordingly
   /// Called for both foreground and background message handling
   static Future<void> _handleMessageData(Map<String, dynamic> data) async {
-    // For background messages, we need to create a new ProviderContainer
-    // since we don't have access to the widget tree
-    ProviderContainer? container;
+    // For background messages, we need to use storage fallback
     WidgetRef? effectiveRef = _ref;
-    
-    if (_ref == null) {
-      container = ProviderContainer();
-    }
     
     final messageType = data['type'] as String?;
     
@@ -284,8 +278,6 @@ class NotificationService {
         // Unknown message type
     }
     
-    // Clean up container if we created one
-    container?.dispose();
   }
 
   /// Handle foreground messages (when app is open and visible)

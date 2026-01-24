@@ -20,11 +20,4 @@ class ApiConfig {
   
   static String get sosEndpoint => '$baseUrl/api/sos';
   static String get healthEndpoint => '$baseUrl/health';
-  
-  // Helper method to easily switch to ngrok for testing
-  static void useNgrok(String ngrokUrl) {
-    // This would require updating the configuration
-    // For now, manually update _devBaseUrl above and change baseUrl getter
-    print('Update _devBaseUrl to: $ngrokUrl and change baseUrl getter to return _devBaseUrl');
-  }
 }
