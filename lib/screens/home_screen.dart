@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _activeLocation;
   final TextEditingController _messageController = TextEditingController();
   bool _isStateLoaded = false;
+  String? _currentDistrict; // Cached district name
   
   // Hold to send SOS functionality
   double _holdProgress = 0.0; // 0.0 to 1.0
@@ -52,7 +53,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Run district subscription in background
     Future.microtask(() async {
       final locationService = ref.read(locationServiceProvider);
-      await _districtService.initializeDistrictSubscription(locationService);
+      final district = await _districtService.initializeDistrictSubscription(locationService);
+      if (district != null && mounted) {
+        setState(() {
+          _currentDistrict = district;
+        });
+        debugPrint('District cached: $district');
+      }
     });
   }
   
@@ -69,6 +76,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() {
       _initializeFutures();
     });
+  }
+  
+  /// Get current district with caching logic
+  /// Returns cached district if available, otherwise fetches from location service
+  Future<String?> _getCurrentDistrict() async {
+    // Return cached district if available
+    if (_currentDistrict != null) {
+      return _currentDistrict;
+    }
+    
+    // Fallback: fetch district from location service
+    try {
+      final locationService = ref.read(locationServiceProvider);
+      final district = await locationService.getCurrentDistrict();
+      
+      // Cache the result
+      if (district != null && mounted) {
+        setState(() {
+          _currentDistrict = district;
+        });
+      }
+      
+      return district;
+    } catch (e) {
+      debugPrint('Failed to get current district: $e');
+      return null;
+    }
   }
 
   @override
@@ -744,6 +778,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Get current address for notification
       final currentAddress = await locationService.getCurrentAddress() ?? 'Location unavailable';
       
+      // Get current district for backend routing
+      final district = await _getCurrentDistrict();
+      
       final response = await sosService.sendSOSAlert(
         sosId: sosId,
         sosType: 'sos_alert',
@@ -759,6 +796,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ? 'Emergency assistance needed' 
                     : _messageController.text.trim(),
           'location': currentAddress,
+          'district': district,
         },
       );
 
@@ -858,6 +896,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Get current address for stop notification
       final currentAddress = await locationService.getCurrentAddress() ?? 'Location unavailable';
 
+      // Get current district for backend routing
+      final district = await _getCurrentDistrict();
+
       // Send stop SOS request
       final response = await sosService.sendSOSAlert(
         sosId: _activeSosId!,
@@ -871,6 +912,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'mobile_number': userMobile,
           'timestamp': DateTime.now().toIso8601String(),
           'location': currentAddress,
+          'district': district,
         },
       );
 

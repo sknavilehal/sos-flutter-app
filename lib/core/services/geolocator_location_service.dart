@@ -41,12 +41,51 @@ class GeolocatorLocationService implements LocationService {
 
   @override
   Future<String?> getDistrictFromCoordinates(double latitude, double longitude) async {
-    return null;
+    try {
+      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+      
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        
+        // Extract locality (district name)
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          return _sanitizeDistrictName(place.locality!);
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      debugPrint('Failed to get district from coordinates: $e');
+      return null;
+    }
   }
 
   @override
   Future<String?> getCurrentDistrict() async {
-    return null;
+    try {
+      final location = await getCurrentLocation();
+      if (location == null) {
+        return null;
+      }
+      
+      return await getDistrictFromCoordinates(location.latitude, location.longitude);
+    } catch (e) {
+      debugPrint('Failed to get current district: $e');
+      return null;
+    }
+  }
+
+  /// Sanitize district name to be FCM topic-compatible
+  /// - Convert to lowercase
+  /// - Replace spaces with hyphens
+  /// - Remove special characters (keep only alphanumeric and hyphens)
+  /// - Trim whitespace
+  String _sanitizeDistrictName(String district) {
+    return district
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-')  // Replace spaces with hyphens
+        .replaceAll(RegExp(r'[^a-z0-9\-]'), '');  // Keep only alphanumeric and hyphens
   }
 
   @override

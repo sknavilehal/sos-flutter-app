@@ -44,7 +44,7 @@ class DistrictSubscriptionService {
     try {
       final topic = 'district-$district';
       await FirebaseMessaging.instance.subscribeToTopic(topic);
-      
+
       // Save subscription info
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_lastDistrictKey, district);
@@ -99,27 +99,29 @@ class DistrictSubscriptionService {
   }
   
   /// Main function to update district subscription based on current location
-  Future<bool> updateDistrictSubscription(LocationService locationService) async {
+  /// Returns the district name on success, null on failure
+  Future<String?> updateDistrictSubscription(LocationService locationService) async {
     try {
       // Check if we have a recent subscription to avoid frequent updates
       if (await isSubscriptionRecent()) {
-        return true;
+        // Return cached district if subscription is recent
+        return await getLastSubscribedDistrict();
       }
       
       // Get current location
       final locationData = await locationService.getCurrentLocation();
       if (locationData == null) {
-        return false;
+        return null;
       }
       
-      // Get district from backend
-      final newDistrict = await getDistrictFromLocation(
+      // Get district from native geocoding
+      final newDistrict = await locationService.getDistrictFromCoordinates(
         locationData.latitude, 
         locationData.longitude
       );
       
       if (newDistrict == null) {
-        return false;
+        return null;
       }
       
       // Check if we need to change subscription
@@ -129,7 +131,7 @@ class DistrictSubscriptionService {
         // Update timestamp to mark as recent
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_lastSubscriptionTimeKey, DateTime.now().millisecondsSinceEpoch);
-        return true;
+        return newDistrict;
       }
       
       // Unsubscribe from old district if exists
@@ -140,19 +142,20 @@ class DistrictSubscriptionService {
       // Subscribe to new district
       final subscribed = await subscribeToDistrict(newDistrict);
       
-      return subscribed;
+      return subscribed ? newDistrict : null;
       
     } catch (e) {
       debugPrint('District subscription update failed: $e');
-      return false;
+      return null;
     }
   }
   
   /// Initialize district subscription on app start
-  Future<void> initializeDistrictSubscription(LocationService locationService) async {
+  /// Returns the district name on success, null on failure
+  Future<String?> initializeDistrictSubscription(LocationService locationService) async {
     // Wait a bit to ensure location services are ready
     await Future.delayed(const Duration(seconds: 2));
     
-    await updateDistrictSubscription(locationService);
+    return await updateDistrictSubscription(locationService);
   }
 }

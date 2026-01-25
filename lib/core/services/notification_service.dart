@@ -27,8 +27,33 @@ class NotificationService {
     
     if (!_initialized) {
       await _initializeLocalNotifications();
+      await _requestFCMPermissions();
       _setupMessageHandlers();
       _initialized = true;
+    }
+  }
+  
+  /// Request FCM notification permissions
+  /// Required for iOS and Android 13+ to show notifications
+  static Future<void> _requestFCMPermissions() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      
+      // Request permission for iOS and Android 13+
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+      
+      debugPrint('FCM Permission status: ${settings.authorizationStatus}');
+      
+      // Get and log FCM token for debugging
+      final token = await messaging.getToken();
+      debugPrint('FCM Token: $token');
+    } catch (e) {
+      debugPrint('FCM permission request failed: $e');
     }
   }
   
@@ -81,7 +106,7 @@ class NotificationService {
       
       if (messageSenderId == currentUserId) {
         // Process the message data first
-        
+
         return;
       }
     }
