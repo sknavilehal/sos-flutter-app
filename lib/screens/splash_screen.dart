@@ -64,20 +64,12 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Logo
-              RrtLogo(
-                size: 80,
-                iconSize: 80,
-                showBorder: false,
-              ),
-              SizedBox(height: 24),
-              
-              // App Title
-              RrtWordmark(
-                titleSize: 40,
-                subtitleSize: 40,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                textAlign: TextAlign.center,
+              // App Branding
+              RrtBranding(
+                scale: 1.0,
+                showBorder: true,
+                spacing: 24,
+                alignment: CrossAxisAlignment.center,
               ),
               
               SizedBox(height: 40),

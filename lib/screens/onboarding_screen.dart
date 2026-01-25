@@ -27,22 +27,12 @@ class OnboardingScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 60),
               
-              // App Logo/Icon
-              const RrtLogo(
-                size: 80,
-                iconSize: 40,
-                borderWidth: 2,
-                borderRadius: 8,
-              ),
-              
-              const SizedBox(height: 60),
-              
-              // App Title
-              const RrtWordmark(
-                titleSize: 40,
-                subtitleSize: 40,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                textAlign: TextAlign.center,
+              // App Branding
+              const RrtBranding(
+                scale: 1.0,
+                showBorder: true,
+                spacing: 60,
+                alignment: CrossAxisAlignment.center,
               ),
               
               const SizedBox(height: AppConstants.brandBodySpacing),

@@ -47,21 +47,12 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
               child: Column(
                 children: [
-                  // App Logo
-                  const RrtLogo(
-                    size: 64,
-                    iconSize: 32,
-                    borderWidth: 2,
-                    borderRadius: 4,
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // App Title
-                  const RrtWordmark(
-                    titleSize: 32,
-                    subtitleSize: 32,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    textAlign: TextAlign.center,
+                  // App Branding
+                  const RrtBranding(
+                    scale: 0.8,
+                    showBorder: true,
+                    spacing: 32,
+                    alignment: CrossAxisAlignment.center,
                   ),
                   const SizedBox(height: 32),
                   

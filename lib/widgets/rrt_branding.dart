@@ -112,3 +112,48 @@ class RrtWordmark extends StatelessWidget {
     );
   }
 }
+
+/// Combined branding widget with logo and wordmark
+class RrtBranding extends StatelessWidget {
+  final double scale;
+  final bool showBorder;
+  final double spacing;
+  final CrossAxisAlignment alignment;
+
+  const RrtBranding({
+    super.key,
+    this.scale = 1.0,
+    this.showBorder = true,
+    this.spacing = 24,
+    this.alignment = CrossAxisAlignment.center,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: alignment,
+      children: [
+        // Logo
+        RrtLogo(
+          size: 80 * scale,
+          iconSize: showBorder ? 40 * scale : 80 * scale,
+          borderWidth: showBorder ? 2 : 0,
+          borderRadius: 0,
+          showBorder: showBorder,
+        ),
+        SizedBox(height: spacing * scale),
+        
+        // Wordmark
+        RrtWordmark(
+          titleSize: 40 * scale,
+          subtitleSize: 40 * scale,
+          crossAxisAlignment: alignment,
+          textAlign: alignment == CrossAxisAlignment.center 
+              ? TextAlign.center 
+              : TextAlign.left,
+        ),
+      ],
+    );
+  }
+}
