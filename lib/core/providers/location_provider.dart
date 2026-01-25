@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/location_service.dart';
 import '../services/geolocator_location_service.dart';
-import '../services/fcm_service.dart';
 
 /// Location service provider
 final locationServiceProvider = Provider<LocationService>((ref) {
@@ -10,26 +9,20 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return GeolocatorLocationService();
 });
 
-/// Location state notifier for managing district changes
+/// Location state notifier for managing location state
+/// Note: District subscription is handled by DistrictSubscriptionService in HomeScreen
 class LocationStateNotifier extends StateNotifier<AsyncValue<String?>> {
-  LocationStateNotifier(this._locationService, this._fcmService) 
+  LocationStateNotifier(this._locationService) 
       : super(const AsyncValue.loading()) {
     _initialize();
   }
 
   final LocationService _locationService;
-  final FCMService _fcmService;
   String? _lastKnownDistrict;
 
-  /// Initialize location services (Firebase should already be initialized)
+  /// Initialize location services
   Future<void> _initialize() async {
     try {
-      try {
-        await _fcmService.initialize()
-            .timeout(const Duration(seconds: 10));
-      } catch (fcmError) {
-        debugPrint('FCM initialization failed: $fcmError');
-      }
       await _updateCurrentDistrict();
     } catch (e) {
       debugPrint('Location initialization failed: $e');
@@ -37,7 +30,7 @@ class LocationStateNotifier extends StateNotifier<AsyncValue<String?>> {
     }
   }
 
-  /// Update current district and manage FCM topic subscription
+  /// Update current district
   Future<void> _updateCurrentDistrict() async {
     try {
       state = const AsyncValue.loading();
@@ -47,17 +40,7 @@ class LocationStateNotifier extends StateNotifier<AsyncValue<String?>> {
           .timeout(const Duration(seconds: 15));
 
       if (district != null) {
-        // Subscribe to new district topic if changed (with timeout protection)
-        if (_lastKnownDistrict != district) {
-          try {
-            await _fcmService.subscribeToDistrictTopic(district)
-                .timeout(const Duration(seconds: 6));
-          } catch (fcmError) {
-            debugPrint('FCM topic subscription failed: $fcmError');
-          }
-          // Always update the district even if FCM fails - this is not critical
-          _lastKnownDistrict = district;
-        }
+        _lastKnownDistrict = district;
         state = AsyncValue.data(district);
       } else {
         state = const AsyncValue.data(null);
@@ -96,6 +79,5 @@ class LocationStateNotifier extends StateNotifier<AsyncValue<String?>> {
 /// Location state provider
 final locationStateProvider = StateNotifierProvider<LocationStateNotifier, AsyncValue<String?>>((ref) {
   final locationService = ref.read(locationServiceProvider);
-  final fcmService = FCMService();
-  return LocationStateNotifier(locationService, fcmService);
+  return LocationStateNotifier(locationService);
 });
