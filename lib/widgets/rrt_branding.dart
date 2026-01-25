@@ -76,7 +76,7 @@ class RrtWordmark extends StatelessWidget {
     this.titleColor = AppTheme.primaryBlack,
     this.subtitleColor = AppTheme.neutralGrey,
     this.titleWeight = FontWeight.bold,
-    this.subtitleWeight = FontWeight.w300,
+    this.subtitleWeight = FontWeight.bold,
     this.height = 1.1,
     this.crossAxisAlignment = CrossAxisAlignment.start,
     this.textAlign = TextAlign.left,
