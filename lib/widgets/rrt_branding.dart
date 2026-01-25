@@ -90,7 +90,7 @@ class RrtWordmark extends StatelessWidget {
         Text(
           title,
           textAlign: textAlign,
-          style: GoogleFonts.jetBrainsMono(
+          style: GoogleFonts.inter(
             fontSize: titleSize,
             fontWeight: titleWeight,
             color: titleColor,
@@ -100,7 +100,7 @@ class RrtWordmark extends StatelessWidget {
         Text(
           subtitle,
           textAlign: textAlign,
-          style: GoogleFonts.jetBrainsMono(
+          style: GoogleFonts.inter(
             fontSize: subtitleSize,
             fontWeight: subtitleWeight,
             color: subtitleColor,
