@@ -28,8 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isStateLoaded = false;
   
   // Hold to send SOS functionality
-  bool _isHoldingButton = false;
-  int _holdProgress = 0; // 0-3 seconds
+  double _holdProgress = 0.0; // 0.0 to 1.0
   Timer? _holdTimer;
   
   // District subscription service
@@ -493,196 +492,144 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ] else ...[
-                // Inactive SOS State (Original)
+                // Inactive SOS State - Redesigned Button
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // SOS Button - Enhanced 3D Glossy Design
-                    Container(
-                      width: sosButtonSize,
-                      height: sosButtonSize,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          // Main gradient background for 3D effect
-                          gradient: _isSendingSOS 
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                    // SOS Button with Progress Ring
+                    GestureDetector(
+                      onLongPressStart: (_) => _startHoldTimer(),
+                      onLongPressEnd: (_) => _cancelHoldTimer(),
+                      onLongPressCancel: () => _cancelHoldTimer(),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Progress Ring
+                          if (_holdProgress > 0)
+                            SizedBox(
+                              width: sosButtonSize + 20,
+                              height: sosButtonSize + 20,
+                              child: CircularProgressIndicator(
+                                value: _holdProgress,
+                                strokeWidth: 6,
+                                backgroundColor: Colors.grey.shade300,
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                              ),
+                            ),
+                          
+                          // Main SOS Button
+                          Container(
+                            width: sosButtonSize,
+                            height: sosButtonSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                center: const Alignment(-0.3, -0.4),
+                                radius: 0.8,
                                 colors: [
-                                  AppTheme.neutralGrey.withValues(alpha: 0.8),
-                                  AppTheme.neutralGrey,
-                                  AppTheme.neutralGrey.withValues(alpha: 0.7),
+                                  const Color(0xFFFF8A8A), // Light red highlight (glossy top)
+                                  const Color(0xFFEE4444), // Bright red
+                                  const Color(0xFFCC2222), // Deep red
+                                  const Color(0xFFAA1111), // Darker red (bottom shadow)
                                 ],
-                                stops: const [0.0, 0.6, 1.0],
-                              )
-                            : _isHoldingButton
-                              ? const RadialGradient(
-                                  center: Alignment(0.3, 0.3), // Inverted for pressed effect
-                                  radius: 1.2,
-                                  colors: [
-                                    Color(0xFFB71C1C), // Deep red shadow (now highlight)
-                                    Color(0xFFCC2936), // Darker red for depth (now mid)
-                                    Color(0xFFE63946), // Main red (now deeper)
-                                    Color(0xFFFF6B6B), // Lighter red highlight (now deepest)
-                                  ],
-                                  stops: [0.0, 0.4, 0.8, 1.0],
-                                )
-                              : const RadialGradient(
-                                  center: Alignment(-0.3, -0.3),
-                                  radius: 1.2,
-                                  colors: [
-                                    Color(0xFFFF6B6B), // Lighter red highlight
-                                    Color(0xFFE63946), // Main red
-                                    Color(0xFFCC2936), // Darker red for depth
-                                    Color(0xFFB71C1C), // Deep red shadow
-                                  ],
-                                  stops: [0.0, 0.4, 0.8, 1.0],
-                                ),
-                          // Add shadow that changes when pressed
-                          boxShadow: _isHoldingButton 
-                            ? [
-                                // Pressed/inset shadow effect
+                                stops: const [0.0, 0.3, 0.7, 1.0],
+                              ),
+                              boxShadow: [
+                                // Main shadow
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  spreadRadius: -2,
-                                  offset: const Offset(0, -2),
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
                                 ),
-                              ]
-                            : [],
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            // Glossy highlight overlay - changes when pressed
-                            gradient: _isHoldingButton
-                              ? LinearGradient(
-                                  begin: Alignment.bottomRight,
-                                  end: Alignment.topLeft,
+                                // Inner highlight
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(-5, -5),
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                // Glossy overlay
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.white.withValues(alpha: 0.1),
-                                    Colors.black.withValues(alpha: 0.2),
+                                    Colors.white.withValues(alpha: 0.4),
+                                    Colors.white.withValues(alpha: 0.0),
                                     Colors.black.withValues(alpha: 0.1),
                                   ],
                                   stops: const [0.0, 0.5, 1.0],
-                                )
-                              : LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.center,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.4),
-                                    Colors.white.withValues(alpha: 0.1),
-                                    Colors.transparent,
-                                  ],
-                                  stops: const [0.0, 0.3, 1.0],
                                 ),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: GestureDetector(
-                              onTapDown: _isSendingSOS ? null : _startHoldTimer,
-                              onTapUp: _isSendingSOS ? null : _cancelHoldTimer,
-                              onTapCancel: _isSendingSOS ? null : _cancelHoldTimer,
-                                child: Container(
-                                width: sosButtonSize,
-                                height: sosButtonSize,
-                                // Apply transform for pressed effect
-                                transform: _isHoldingButton 
-                                  ? (Matrix4.identity()..translateByDouble(2.0, 2.0, 0.0, 1.0)) // Slightly inset when pressed
-                                  : Matrix4.identity(),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _isHoldingButton 
-                                      ? Colors.white.withValues(alpha: 0.1) 
-                                      : Colors.white.withValues(alpha: 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: _isSendingSOS 
-                                    ? Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const CircularProgressIndicator(
+                              ),
+                              child: Center(
+                                child: _isSendingSOS 
+                                  ? const Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        CircularProgressIndicator(
+                                          color: AppTheme.pureWhite,
+                                          strokeWidth: 3,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Sending...',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
                                             color: AppTheme.pureWhite,
-                                            strokeWidth: 3,
+                                            shadows: [
+                                              Shadow(
+                                                offset: Offset(0, 2),
+                                                blurRadius: 4,
+                                                color: Colors.black38,
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Sending...',
-                                            style: TextStyle(
-                                              fontSize: sosButtonSize * 0.08, // Responsive font size
-                                              fontWeight: FontWeight.w500,
-                                              color: AppTheme.pureWhite,
-                                              shadows: const [
-                                                Shadow(
-                                                  offset: Offset(0, 1),
-                                                  blurRadius: 2,
-                                                  color: Colors.black26,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'SOS',
-                                            style: TextStyle(
-                                              fontSize: sosButtonSize * 0.16, // Responsive font size
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.pureWhite,
-                                              letterSpacing: 2,
-                                              shadows: _isHoldingButton
-                                                ? const [
-                                                    Shadow(
-                                                      offset: Offset(0, -1),
-                                                      blurRadius: 3,
-                                                      color: Colors.black45,
-                                                    ),
-                                                  ]
-                                                : const [
-                                                    Shadow(
-                                                      offset: Offset(0, 2),
-                                                      blurRadius: 4,
-                                                      color: Colors.black26,
-                                                    ),
-                                                  ],
-                                            ),
+                                        ),
+                                      ],
+                                    )
+                                  : Text(
+                                      'SOS',
+                                      style: TextStyle(
+                                        fontSize: sosButtonSize * 0.22,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.pureWhite,
+                                        letterSpacing: 4,
+                                        shadows: const [
+                                          Shadow(
+                                            offset: Offset(0, 3),
+                                            blurRadius: 6,
+                                            color: Colors.black38,
                                           ),
                                         ],
                                       ),
-                                ),
+                                    ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                     
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     
                     // Hold instruction
                     Text(
-                      _isHoldingButton 
-                        ? 'Keep holding...' 
+                      _holdProgress > 0 
+                        ? 'Keep holding... ${((1 - _holdProgress) * 3).ceil()}s'
                         : 'Hold for 3 seconds to send alert',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.neutralGrey,
-                        fontWeight: FontWeight.w500,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _holdProgress > 0 ? AppTheme.accentRed : AppTheme.neutralGrey,
+                        fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     
                     // Emergency Message Input (Optional)
                     Container(
@@ -723,39 +670,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// Start hold timer when user presses down on SOS button
-  void _startHoldTimer(TapDownDetails details) {
-    if (_isSendingSOS) return;
+  void _startHoldTimer() {
+    if (_isSendingSOS || _holdTimer != null) return;
     
-    setState(() {
-      _isHoldingButton = true;
-      _holdProgress = 0;
-    });
+    const totalDuration = Duration(milliseconds: 3000);
+    const tickInterval = Duration(milliseconds: 50);
+    final totalTicks = totalDuration.inMilliseconds ~/ tickInterval.inMilliseconds;
+    int currentTick = 0;
     
-    _holdTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _holdTimer = Timer.periodic(tickInterval, (timer) {
+      currentTick++;
       setState(() {
-        _holdProgress++;
+        _holdProgress = currentTick / totalTicks;
       });
       
-      if (_holdProgress >= 3) {
+      if (_holdProgress >= 1.0) {
         timer.cancel();
         _holdTimer = null;
-        _isHoldingButton = false;
+        _holdProgress = 0.0;
         _handleSOSPress(); // Trigger SOS after 3 seconds
       }
     });
   }
   
   /// Cancel hold timer when user releases or cancels tap
-  void _cancelHoldTimer([TapUpDetails? details]) {
+  void _cancelHoldTimer() {
     _holdTimer?.cancel();
     _holdTimer = null;
     
-    if (mounted) {
-      setState(() {
-        _isHoldingButton = false;
-        _holdProgress = 0;
-      });
-    }
+    setState(() {
+      _holdProgress = 0.0;
+    });
   }
 
   /// Handle SOS button press
