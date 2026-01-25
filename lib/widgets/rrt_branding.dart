@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
 
 class RrtLogo extends StatelessWidget {
@@ -89,23 +90,21 @@ class RrtWordmark extends StatelessWidget {
         Text(
           title,
           textAlign: textAlign,
-          style: TextStyle(
+          style: GoogleFonts.jetBrainsMono(
             fontSize: titleSize,
             fontWeight: titleWeight,
             color: titleColor,
             height: height,
-            fontFamily: 'JetBrains Mono',
           ),
         ),
         Text(
           subtitle,
           textAlign: textAlign,
-          style: TextStyle(
+          style: GoogleFonts.jetBrainsMono(
             fontSize: subtitleSize,
             fontWeight: subtitleWeight,
             color: subtitleColor,
             height: height,
-            fontFamily: 'JetBrains Mono',
           ),
         ),
       ],
