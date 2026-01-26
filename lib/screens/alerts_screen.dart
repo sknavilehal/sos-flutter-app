@@ -180,7 +180,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+        borderRadius: BorderRadius.circular(0),
         border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
@@ -273,7 +273,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: AppTheme.primaryBlack,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(0),
                   ),
                   child: InkWell(
                     onTap: () => _showCallDialog(alert),
@@ -309,7 +309,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: AppTheme.primaryBlack,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(0),
                   ),
                   child: InkWell(
                     onTap: () => _getDirections(

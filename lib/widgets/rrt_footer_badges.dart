@@ -20,6 +20,7 @@ class RrtFooterBadges extends StatelessWidget {
             color: AppTheme.textSecondary,
             fontSize: 12,
             letterSpacing: 1.0,
+            fontFamily: 'JetBrainsMono',
           ),
         ),
         Text(
@@ -28,6 +29,7 @@ class RrtFooterBadges extends StatelessWidget {
             color: AppTheme.textSecondary,
             fontSize: 12,
             letterSpacing: 1.0,
+            fontFamily: 'JetBrainsMono',
           ),
         ),
       ],

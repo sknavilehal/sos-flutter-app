@@ -39,12 +39,13 @@ class OnboardingScreen extends StatelessWidget {
               
               // Description
               const Text(
-                'For animal welfare, feeders, and volunteers. Find help, and reach out when in need.',
+                'Built for animal welfare, feeders, and volunteers.\nFind help, and reach out when in need.',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppTheme.primaryBlack,
                   height: 1.5,
                   letterSpacing: -0.01,
+                  fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.left,
               ),
