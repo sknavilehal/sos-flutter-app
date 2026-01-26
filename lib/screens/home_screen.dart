@@ -167,10 +167,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.screenMargins),
-          child: Column(
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.screenMargins),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               const SizedBox(height: 8),
               
               // App Header
@@ -251,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
               
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               
               // Location Status
               Consumer(
@@ -394,13 +396,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
               
-              // Flexible spacer to center SOS section
-              const Expanded(
-                child: Center(
-                  child: SizedBox(), // Empty spacer
-                ),
-              ),
-              
+              const SizedBox(height: 24),
               
               // SOS Button Section
               if (!_isStateLoaded) ...[
@@ -692,10 +688,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
               
               // Bottom spacer
-              const Expanded(
-                child: SizedBox(),
-              ),
+              const SizedBox(height: 40),
             ],
+            ),
           ),
         ),
       ),

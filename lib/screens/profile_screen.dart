@@ -86,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   // Section Title
                   const Text(
-                    'Profile',
+                    'Your Profile',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
