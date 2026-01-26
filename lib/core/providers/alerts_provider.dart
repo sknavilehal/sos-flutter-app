@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,13 +7,33 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// State notifier for managing active SOS alerts
 /// This provider manages the list of active emergency alerts received via FCM
 class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
+  Timer? _cleanupTimer;
+  
   ActiveAlertsNotifier() : super([]) {
     // Schedule async loading to avoid modifying state during construction
     Future.microtask(() => _loadAlertsFromStorage());
+    // Start automatic background cleanup timer (checks every 5 minutes)
+    _startCleanupTimer();
   }
 
   static const String _alertsKey = 'active_alerts';
-  static const int _alertTTLHours = 1; // Alerts expire after 1 hour
+  static const double _alertTTLHours = 1.5; // Alerts expire after 1.5 hours
+  static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
+
+  /// Start automatic background cleanup timer
+  /// Periodically removes expired alerts without manual intervention
+  void _startCleanupTimer() {
+    _cleanupTimer = Timer.periodic(_cleanupInterval, (timer) {
+      removeExpiredAlerts();
+    });
+  }
+
+  /// Stop the cleanup timer (called on dispose)
+  @override
+  void dispose() {
+    _cleanupTimer?.cancel();
+    super.dispose();
+  }
 
   /// Load alerts from SharedPreferences on app start
   /// Automatically filters out expired alerts based on timestamp
@@ -33,7 +54,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
           // Check if alert is within TTL (Time To Live)
           final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
           
-          if (alertAge.inHours < _alertTTLHours) {
+          if (alertAge.inMinutes < (_alertTTLHours * 60)) {
             validAlerts.add(alert);
           }
         } catch (e) {
@@ -105,18 +126,23 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     await _saveAlertsToStorage();
   }
 
-  /// Manually remove expired alerts
-  /// TODO: Implement automatic background cleanup timer
+  /// Automatically remove expired alerts
+  /// Called periodically by background timer and on app start
   Future<void> removeExpiredAlerts() async {
     final currentTime = DateTime.now().millisecondsSinceEpoch;
+    final initialCount = state.length;
     
     state = state.where((alert) {
       final alertTimestamp = alert['timestamp'] as int? ?? 0;
       final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
-      return alertAge.inHours < _alertTTLHours;
+      return alertAge.inMinutes < (_alertTTLHours * 60);
     }).toList();
     
-    await _saveAlertsToStorage();
+    // Only save if alerts were actually removed
+    if (state.length != initialCount) {
+      await _saveAlertsToStorage();
+      debugPrint('Removed ${initialCount - state.length} expired alert(s)');
+    }
   }
 
 }

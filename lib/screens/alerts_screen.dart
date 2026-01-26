@@ -112,38 +112,32 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
               ),
             ),
             
-            // Alerts content - shows placeholder + real alerts from provider
+            // Alerts content - shows real alerts from provider
+            // Automatic cleanup runs in background every 5 minutes
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  // Clear expired alerts and refresh
-                  await ref.read(activeAlertsProvider.notifier).removeExpiredAlerts();
-                  await ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+              child: FutureBuilder<Position?>(
+                future: _getUserPosition(locationService),
+                builder: (context, positionSnapshot) {
+                  final userPosition = positionSnapshot.data;
+                  
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
+                    itemCount: alerts.length,
+                    itemBuilder: (context, index) {
+                      // Real alerts
+                      final alert = alerts[index];
+                      
+                      // Calculate distance for this alert
+                      final distance = _calculateDistance(
+                        alert['exact_lat'] as double?,
+                        alert['exact_lng'] as double?,
+                        userPosition,
+                      );
+                      
+                      return _buildAlertCard(alert, distance);
+                    },
+                  );
                 },
-                child: FutureBuilder<Position?>(
-                  future: _getUserPosition(locationService),
-                  builder: (context, positionSnapshot) {
-                    final userPosition = positionSnapshot.data;
-                    
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                      itemCount: alerts.length,
-                      itemBuilder: (context, index) {
-                        // Real alerts
-                        final alert = alerts[index];
-                        
-                        // Calculate distance for this alert
-                        final distance = _calculateDistance(
-                          alert['exact_lat'] as double?,
-                          alert['exact_lng'] as double?,
-                          userPosition,
-                        );
-                        
-                        return _buildAlertCard(alert, distance);
-                      },
-                    );
-                  },
-                ),
               ),
             ),
             
