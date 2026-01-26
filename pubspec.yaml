@@ -40,6 +40,9 @@ dependencies:
   geocoding: ^3.0.0
   http: ^1.2.2
   
+  # Geospatial - for district boundary lookup
+  latlong2: ^0.9.1
+  
   # State Management & Navigation
   flutter_riverpod: ^2.5.1
   
@@ -82,9 +85,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/data/dists11.geojson
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

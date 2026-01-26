@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/offline_district_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/alerts_screen.dart';
 
@@ -93,6 +94,15 @@ class RRTApp extends ConsumerWidget {
   
   /// Initialize async services
   Future<void> _initializeServices(WidgetRef ref) async {
+    // Initialize offline district service (loads district boundaries)
+    // This runs in background during splash screen display
+    try {
+      await OfflineDistrictService.instance.initialize();
+    } catch (e) {
+      // Continue even if district service fails to initialize
+      debugPrint('District service initialization failed: $e');
+    }
+    
     // Initialize notification service with navigator key and Riverpod ref
     // This enables FCM notifications to navigate and update state
     await NotificationService.initialize(navigatorKey, ref);

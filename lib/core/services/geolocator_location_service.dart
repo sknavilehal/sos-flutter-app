@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'location_service.dart';
+import 'offline_district_service.dart';
 
 /// Geolocator-based implementation of LocationService
 class GeolocatorLocationService implements LocationService {
+  final OfflineDistrictService _districtService = OfflineDistrictService.instance;
   
   @override
   Future<LocationData?> getCurrentLocation() async {
@@ -42,18 +44,9 @@ class GeolocatorLocationService implements LocationService {
   @override
   Future<String?> getDistrictFromCoordinates(double latitude, double longitude) async {
     try {
-      final placemarks = await placemarkFromCoordinates(latitude, longitude);
-      
-      if (placemarks.isNotEmpty) {
-        final place = placemarks.first;
-        
-        // Extract locality (district name)
-        if (place.locality != null && place.locality!.isNotEmpty) {
-          return _sanitizeDistrictName(place.locality!);
-        }
-      }
-      
-      return null;
+      // Use offline district lookup with polygon boundaries
+      final district = _districtService.getDistrictFromCoordinates(latitude, longitude);
+      return district;
     } catch (e) {
       debugPrint('Failed to get district from coordinates: $e');
       return null;
@@ -73,19 +66,6 @@ class GeolocatorLocationService implements LocationService {
       debugPrint('Failed to get current district: $e');
       return null;
     }
-  }
-
-  /// Sanitize district name to be FCM topic-compatible
-  /// - Convert to lowercase
-  /// - Replace spaces with hyphens
-  /// - Remove special characters (keep only alphanumeric and hyphens)
-  /// - Trim whitespace
-  String _sanitizeDistrictName(String district) {
-    return district
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'\s+'), '-')  // Replace spaces with hyphens
-        .replaceAll(RegExp(r'[^a-z0-9\-]'), '');  // Keep only alphanumeric and hyphens
   }
 
   @override

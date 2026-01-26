@@ -58,7 +58,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         setState(() {
           _currentDistrict = district;
         });
-        debugPrint('District cached: $district');
       }
     });
   }

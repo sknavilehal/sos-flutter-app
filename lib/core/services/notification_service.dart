@@ -107,6 +107,11 @@ class NotificationService {
       if (messageSenderId == currentUserId) {
         // Process the message data first
 
+        await handleForegroundMessage(message);
+    
+    // Show local notification
+      await _showLocalNotification(message);
+
         return;
       }
     }
