@@ -40,12 +40,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<bool>? _locationPermissionFuture;
   Future<String?>? _locationAddressFuture;
   
+  // Server health check caching
+  static DateTime? _lastServerCheckTime;
+  static bool? _lastServerCheckResult;
+  static const _serverCheckInterval = Duration(minutes: 5);
+  Timer? _serverHealthTimer;
+  
   @override
   void initState() {
     super.initState();
     _loadSOSState();
     _initializeFutures();
     _initializeDistrictSubscription();
+    _startPeriodicServerHealthCheck();
   }
   
   /// Initialize district subscription for receiving SOS alerts
@@ -64,15 +71,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   
   /// Initialize cached futures to prevent rebuilds
   void _initializeFutures() {
-    _serverConnectionFuture = ref.read(sosServiceProvider).testConnection();
+    // Use cached server status if available and recent
+    if (_lastServerCheckResult != null && 
+        _lastServerCheckTime != null && 
+        DateTime.now().difference(_lastServerCheckTime!) < _serverCheckInterval) {
+      // Use cached result
+      _serverConnectionFuture = Future.value(_lastServerCheckResult);
+    } else {
+      // Perform new check
+      _serverConnectionFuture = _checkServerConnection();
+    }
     
     final locationService = ref.read(locationServiceProvider);
     _locationPermissionFuture = locationService.hasLocationPermission();
   }
   
+  /// Check server connection and cache the result
+  Future<bool> _checkServerConnection() async {
+    try {
+      final result = await ref.read(sosServiceProvider).testConnection();
+      _lastServerCheckResult = result;
+      _lastServerCheckTime = DateTime.now();
+      return result;
+    } catch (e) {
+      debugPrint('Server connection check failed: $e');
+      _lastServerCheckResult = false;
+      _lastServerCheckTime = DateTime.now();
+      return false;
+    }
+  }
+  
+  /// Start periodic server health check every 5 minutes
+  void _startPeriodicServerHealthCheck() {
+    _serverHealthTimer = Timer.periodic(_serverCheckInterval, (timer) {
+      if (mounted) {
+        _checkServerConnection().then((result) {
+          if (mounted) {
+            setState(() {
+              _serverConnectionFuture = Future.value(result);
+            });
+          }
+        });
+      }
+    });
+  }
+  
   /// Refresh cached futures when needed
   void _refreshFutures() {
     setState(() {
+      _locationAddressFuture = null; // Clear address cache to refresh location
+      // Force new server check by clearing cache
+      _lastServerCheckResult = null;
+      _lastServerCheckTime = null;
       _initializeFutures();
     });
   }
@@ -108,6 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void dispose() {
     _messageController.dispose();
     _holdTimer?.cancel();
+    _serverHealthTimer?.cancel();
     super.dispose();
   }
 
