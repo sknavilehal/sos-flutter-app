@@ -61,6 +61,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                     'Terms &\nConditions',
                     textAlign: TextAlign.center,
                     style: TextStyle(
+                      fontFamily: 'Inter',
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryBlack,
@@ -257,6 +258,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                     const Text(
                       'Last Updated: 22/01/2026',
                       style: TextStyle(
+                        fontFamily: 'Inter',
                         fontSize: 11,
                         color: AppTheme.neutralGrey,
                         fontStyle: FontStyle.italic,
@@ -302,6 +304,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
               const Text(
                 'SECURE ACCESS  •  PRIVACY ENSURED',
                 style: TextStyle(
+                  fontFamily: 'Inter',
                   fontSize: 11,
                   color: AppTheme.neutralGrey,
                   letterSpacing: 1.2,
@@ -318,6 +321,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
     return Text(
       text,
       style: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         color: AppTheme.primaryBlack,
         height: 1.6,
@@ -333,6 +337,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
         Text(
           title,
           style: const TextStyle(
+            fontFamily: 'Inter',
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: AppTheme.primaryBlack,
@@ -344,6 +349,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
           Text(
             description,
             style: const TextStyle(
+              fontFamily: 'Inter',
               fontSize: 13,
               color: AppTheme.neutralGrey,
               height: 1.6,
@@ -360,6 +366,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
       child: Text(
         text,
         style: const TextStyle(
+          fontFamily: 'Inter',
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppTheme.primaryBlack,
@@ -373,6 +380,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
     return Text(
       text,
       style: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13,
         color: AppTheme.neutralGrey,
         height: 1.6,
@@ -402,6 +410,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                 child: Text(
                   item,
                   style: const TextStyle(
+                    fontFamily: 'Inter',
                     fontSize: 13,
                     color: AppTheme.neutralGrey,
                     height: 1.6,

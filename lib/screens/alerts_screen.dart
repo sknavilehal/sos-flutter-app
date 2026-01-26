@@ -18,6 +18,36 @@ class AlertsScreen extends ConsumerStatefulWidget {
 }
 
 class _AlertsScreenState extends ConsumerState<AlertsScreen> {
+  /// Get user's current position for distance calculations
+  /// Returns Position object or null if unavailable
+  Future<Position?> _getUserPosition(dynamic locationService) async {
+    try {
+      // Get current location from location service
+      final locationData = await locationService.getCurrentLocation();
+      
+      if (locationData == null) {
+        return null;
+      }
+      
+      // Convert LocationData to Position for distance calculations
+      return Position(
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        timestamp: locationData.timestamp,
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    } catch (e) {
+      debugPrint('Failed to get user position: $e');
+      return null;
+    }
+  }
+  
   /// Calculate distance between user and alert location
   /// Returns distance in kilometers, or null if calculation fails
   double? _calculateDistance(double? alertLat, double? alertLng, Position? userPosition) {
@@ -45,14 +75,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
   Widget build(BuildContext context) {
     // Watch both alerts and location providers for real-time updates
     final alerts = ref.watch(activeAlertsProvider);
-    final locationState = ref.watch(locationStateProvider);
-    
-    // Get user's current position for distance calculations
-    Position? userPosition;
-    if (locationState.hasValue && locationState.value != null) {
-      // Note: In a real app, you'd want to get the actual Position object
-      // For now, we'll handle this in the distance calculation
-    }
+    final locationService = ref.watch(locationServiceProvider);
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -97,21 +120,28 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   await ref.read(activeAlertsProvider.notifier).removeExpiredAlerts();
                   await ref.read(activeAlertsProvider.notifier).refreshFromStorage();
                 },
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                  itemCount: alerts.length,
-                  itemBuilder: (context, index) {
-                    // Real alerts
-                    final alert = alerts[index];
+                child: FutureBuilder<Position?>(
+                  future: _getUserPosition(locationService),
+                  builder: (context, positionSnapshot) {
+                    final userPosition = positionSnapshot.data;
                     
-                    // Calculate distance for this alert
-                    final distance = _calculateDistance(
-                      alert['exact_lat'] as double?,
-                      alert['exact_lng'] as double?,
-                      userPosition,
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
+                      itemCount: alerts.length,
+                      itemBuilder: (context, index) {
+                        // Real alerts
+                        final alert = alerts[index];
+                        
+                        // Calculate distance for this alert
+                        final distance = _calculateDistance(
+                          alert['exact_lat'] as double?,
+                          alert['exact_lng'] as double?,
+                          userPosition,
+                        );
+                        
+                        return _buildAlertCard(alert, distance);
+                      },
                     );
-                    
-                    return _buildAlertCard(alert, distance);
                   },
                 ),
               ),
