@@ -92,19 +92,23 @@ class RRTApp extends ConsumerWidget {
     );
   }
   
-  /// Initialize async services
+  /// Initialize async services in parallel for faster startup
   Future<void> _initializeServices(WidgetRef ref) async {
-    // Initialize offline district service (loads district boundaries)
-    // This runs in background during splash screen display
-    try {
-      await OfflineDistrictService.instance.initialize();
-    } catch (e) {
-      // Continue even if district service fails to initialize
-      debugPrint('District service initialization failed: $e');
-    }
-    
-    // Initialize notification service with navigator key and Riverpod ref
-    // This enables FCM notifications to navigate and update state
-    await NotificationService.initialize(navigatorKey, ref);
+    // Initialize both services in parallel to avoid blocking
+    // Notification service (critical) and District service (non-critical) run simultaneously
+    await Future.wait([
+      // District service: Loads district boundaries (2-10 seconds)
+      // Non-critical - can fail without breaking app functionality
+      OfflineDistrictService.instance.initialize()
+        .catchError((e) {
+          debugPrint('District service initialization failed: $e');
+          // Return null to satisfy Future.wait
+          return null;
+        }),
+      
+      // Notification service: Sets up FCM handlers and permissions (< 1 second)
+      // Critical - must initialize quickly for push notifications to work
+      NotificationService.initialize(navigatorKey, ref),
+    ]);
   }
 }
