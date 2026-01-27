@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 
 class LabeledTextField extends StatelessWidget {
@@ -9,6 +10,7 @@ class LabeledTextField extends StatelessWidget {
   final TextStyle? textStyle;
   final String? counterText;
   final EdgeInsetsGeometry contentPadding;
+  final List<TextInputFormatter>? inputFormatters;
 
   const LabeledTextField({
     super.key,
@@ -19,6 +21,7 @@ class LabeledTextField extends StatelessWidget {
     this.textStyle,
     this.counterText,
     this.contentPadding = const EdgeInsets.symmetric(vertical: 12),
+    this.inputFormatters,
   });
 
   @override
@@ -40,6 +43,7 @@ class LabeledTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           maxLength: maxLength,
+          inputFormatters: inputFormatters,
           style: textStyle ??
               const TextStyle(
                 fontSize: 18,

@@ -126,7 +126,7 @@ class RrtScreenContent extends StatelessWidget {
             if (showHeader) ...[
               const SizedBox(height: 8),
               _buildHeader(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
             ],
             body,
             if (footer != null) ...[
@@ -153,7 +153,7 @@ class RrtScreenContent extends StatelessWidget {
               children: [
                 const SizedBox(height: 8),
                 _buildHeader(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
               ],
             ),
           ),

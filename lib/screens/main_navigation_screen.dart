@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
-import '../core/constants/app_constants.dart';
 import '../widgets/rrt_screen_layout.dart';
-import '../widgets/rrt_footer_badges.dart';
 import 'home_screen.dart';
 import 'alerts_screen.dart';
 import 'profile_screen.dart';
+import 'help_screen.dart';
 
 /// Main navigation screen with bottom navigation bar
 /// Uses shared RrtScreenContent layout for consistent header across all tabs
@@ -23,6 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const HomeScreen(),
     const AlertsScreen(),
     const ProfileScreen(),
+    const HelpScreen(),
   ];
 
   /// Get screen-specific footer for the current tab
@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 1: // Alerts screen
         return const Center(
           child: Text(
-            'CONTACT DETAILS ARE VISIBLE ONLY WHILE THIS AN ALERT IS ACTIVE.',
+            'CONTACT DETAILS ARE VISIBLE ONLY WHILE AN ALERT IS ACTIVE.',
             style: TextStyle(
               fontSize: 11,
               color: AppTheme.textSecondary,
@@ -84,13 +84,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 unselectedItemColor: AppTheme.textSecondary,
                 showSelectedLabels: true,
                 showUnselectedLabels: true,
+                iconSize: 22,
                 selectedLabelStyle: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
                 unselectedLabelStyle: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.5,
                 ),
@@ -107,18 +108,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     icon: Icon(Icons.person),
                     label: 'PROFILE',
                   ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.support),
+                    label: 'HELP',
+                  ),
                 ],
               ),
-            ),
-            
-            // Global footer badges (below navigation bar)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.screenMargins,
-                vertical: 12,
-              ),
-              color: AppTheme.backgroundColor,
-              child: const RrtFooterBadges(),
             ),
           ],
         ),

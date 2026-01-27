@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
+import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
 import 'profile_create_screen.dart';
 import '../widgets/rrt_screen_layout.dart';
 import '../widgets/rrt_primary_button.dart';
+import '../widgets/rrt_footer_badges.dart';
 
 /// Terms and Conditions screen shown once on first app launch
 class TermsAndConditionsScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Terms &\nConditions',
+                  'Terms & Conditions',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -70,7 +72,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.only(left: 28, right: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -270,44 +272,27 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
       ),
       // Accept Button (Fixed at bottom)
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.pureWhite,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: const BoxDecoration(
+          color: AppTheme.backgroundColor,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Accept Button
-              RrtPrimaryButton(
-                label: 'ACCEPT',
-                height: 56,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
-                iconSpacing: 16,
-                onTap: _acceptTerms,
-              ),
-              const SizedBox(height: 16),
-              
-              // Footer Text
-              const Text(
-                'SECURE ACCESS  •  PRIVACY ENSURED',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: AppTheme.neutralGrey,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Accept Button
+            RrtPrimaryButton(
+              label: 'ACCEPT',
+              height: AppConstants.primaryButtonHeight,
+              onTap: _acceptTerms,
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Footer badges
+            const RrtFooterBadges(),
+            
+            const SizedBox(height: 10),
+          ],
         ),
       ),
     );
@@ -316,6 +301,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
   Widget _buildIntroText(String text) {
     return Text(
       text,
+      textAlign: TextAlign.justify,
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 13,
@@ -344,6 +330,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
           const SizedBox(height: 8),
           Text(
             description,
+            textAlign: TextAlign.justify,
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
@@ -375,6 +362,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
   Widget _buildBodyText(String text) {
     return Text(
       text,
+      textAlign: TextAlign.justify,
       style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 13,
@@ -405,6 +393,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
               Expanded(
                 child: Text(
                   item,
+                  textAlign: TextAlign.justify,
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,

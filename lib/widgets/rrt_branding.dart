@@ -97,6 +97,7 @@ class RrtWordmark extends StatelessWidget {
             height: height,
           ),
         ),
+        const SizedBox(height: 4),
         Text(
           subtitle,
           textAlign: textAlign,
@@ -123,7 +124,7 @@ class RrtBranding extends StatelessWidget {
     super.key,
     this.scale = 1.0,
     this.showBorder = true,
-    this.spacing = 24,
+    this.spacing = 32,
     this.alignment = CrossAxisAlignment.center,
   });
 

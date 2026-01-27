@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
@@ -41,7 +42,12 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           body: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.defaultPadding),
+              padding: const EdgeInsets.only(
+                left: AppConstants.defaultPadding + 4,
+                right: AppConstants.defaultPadding,
+                top: 0,
+                bottom: 0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -49,8 +55,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               const Text(
                 'Your Profile',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Inter',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
                   color: AppTheme.primaryBlack,
                   letterSpacing: -0.01,
                 ),
@@ -62,8 +69,11 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               LabeledTextField(
                 label: 'NAME',
                 controller: _nameController,
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
+                ],
                 textStyle: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppTheme.primaryBlack,
                 ),
               ),
@@ -78,7 +88,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
                 maxLength: 10,
                 counterText: '',
                 textStyle: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppTheme.primaryBlack,
                 ),
               ),
@@ -97,9 +107,9 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'YOUR PHONE NUMBER IS EXPOSED ONLY WHEN AN SOS ALERT IS ACTIVE. PRIVACY BY DESIGN.',
+                'YOUR PHONE NUMBER IS EXPOSED ONLY WHEN AN SOS ALERT IS ACTIVE.',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 8,
                   color: AppTheme.textSecondary,
                   height: 1.4,
                 ),

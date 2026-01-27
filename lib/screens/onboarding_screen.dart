@@ -23,7 +23,12 @@ class OnboardingScreen extends StatelessWidget {
           useScrollView: false,
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           body: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppConstants.defaultPadding),
+            padding: EdgeInsets.only(
+              left: AppConstants.defaultPadding + 2,
+              right: AppConstants.defaultPadding,
+              top: 0,
+              bottom: 0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -32,24 +37,39 @@ class OnboardingScreen extends StatelessWidget {
                   'WHERE EMPATHY MEETS ACTION',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 16,
+                    fontSize: 14,
                     color: AppTheme.primaryBlack,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.25 * 14, // 0.25em
+                    height: 1.0,
                   ),
                   textAlign: TextAlign.left,
                 ),
-                SizedBox(height: 16),
-                // Description
+                SizedBox(height: 55),
+                // Mission Line 1
                 Text(
-                  'Built for animal welfare, feeders, and volunteers.\nFind help, and reach out when in need.',
+                  'Built for animal welfare workers, volunteers and feeders.',
                   style: TextStyle(
                     fontFamily: 'Inter',
-                    fontSize: 20,
+                    fontSize: 28,
                     color: AppTheme.primaryBlack,
-                    height: 1.5,
-                    letterSpacing: -0.01,
-                    fontWeight: FontWeight.bold,
+                    height: 1.1,
+                    letterSpacing: -0.04 * 28, // -0.04em
+                    fontWeight: FontWeight.w900,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(height: 24),
+                // Mission Line 2
+                Text(
+                  'Find help, and reach out when in need.',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 28,
+                    color: AppTheme.primaryBlack,
+                    height: 1.1,
+                    letterSpacing: -0.04 * 28, // -0.04em
+                    fontWeight: FontWeight.w900,
                   ),
                   textAlign: TextAlign.left,
                 ),

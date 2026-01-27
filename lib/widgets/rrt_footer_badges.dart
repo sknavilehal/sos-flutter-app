@@ -18,7 +18,7 @@ class RrtFooterBadges extends StatelessWidget {
           'SECURE ACCESS',
           style: TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 12,
+            fontSize: 10,
             letterSpacing: 1.0,
             fontFamily: 'JetBrainsMono',
           ),
@@ -27,7 +27,7 @@ class RrtFooterBadges extends StatelessWidget {
           'PRIVACY ENSURED',
           style: TextStyle(
             color: AppTheme.textSecondary,
-            fontSize: 12,
+            fontSize: 10,
             letterSpacing: 1.0,
             fontFamily: 'JetBrainsMono',
           ),

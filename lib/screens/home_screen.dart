@@ -217,7 +217,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Return only the home screen content (header is handled by MainNavigationScreen)
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.screenMargins),
+        padding: const EdgeInsets.fromLTRB(
+          AppConstants.screenMargins + 2, // left
+          8, // top - reduced from 24
+          AppConstants.screenMargins, // right
+          AppConstants.screenMargins, // bottom
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -242,37 +247,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       }
                       
                       final isConnected = snapshot.data ?? false;
-                      return Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isConnected ? Colors.green : AppTheme.accentRed,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isConnected ? 'Server connected' : 'Server offline',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isConnected ? Colors.green : AppTheme.accentRed,
-                            ),
-                          ),
-                          if (!isConnected) ...[
-                            const Spacer(),
-                            TextButton(
-                              onPressed: _refreshFutures, // Refresh server connection
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 2),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isConnected ? Colors.green : AppTheme.accentRed,
                               ),
-                              child: const Text('Retry', style: TextStyle(fontSize: 12)),
                             ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isConnected ? 'SERVER CONNECTED' : 'SERVER OFFLINE',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'JetBrainsMono',
+                                color: isConnected ? Colors.green : AppTheme.accentRed,
+                              ),
+                            ),
+                            if (!isConnected) ...[
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _refreshFutures, // Refresh server connection
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text('Retry', style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       );
                     },
                   );
