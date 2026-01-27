@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 
@@ -84,8 +85,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryBlack,
@@ -192,8 +192,7 @@ class _HelpScreenState extends State<HelpScreen> {
             child: Center(
               child: Text(
                 number,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.pureWhite,
@@ -211,8 +210,7 @@ class _HelpScreenState extends State<HelpScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryBlack,
@@ -222,8 +220,7 @@ class _HelpScreenState extends State<HelpScreen> {
                 const SizedBox(height: 6),
                 Text(
                   description,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppTheme.textSecondary,
                     height: 1.5,
@@ -256,19 +253,18 @@ class _HelpScreenState extends State<HelpScreen> {
             ),
           );
         },
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.bug_report_outlined,
               size: 20,
               color: AppTheme.primaryBlack,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               'REPORT ISSUE',
-              style: TextStyle(
-                fontFamily: 'Inter',
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryBlack,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/providers/location_provider.dart';
@@ -210,10 +211,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final availableHeight = screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
-    final sosButtonSize = (availableHeight * 0.25).clamp(150.0, 200.0); // Responsive SOS button size
-    
     // Return only the home screen content (header is handled by MainNavigationScreen)
     return SingleChildScrollView(
       child: Padding(
@@ -571,8 +568,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           // Progress Ring
                           if (_holdProgress > 0)
                             SizedBox(
-                              width: sosButtonSize + 20,
-                              height: sosButtonSize + 20,
+                              width: _SosButton.glowDiameter + 20,
+                              height: _SosButton.glowDiameter + 20,
                               child: CircularProgressIndicator(
                                 value: _holdProgress,
                                 strokeWidth: 6,
@@ -581,99 +578,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                           
-                          // Main SOS Button
-                          Container(
-                            width: sosButtonSize,
-                            height: sosButtonSize,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                center: const Alignment(-0.3, -0.4),
-                                radius: 0.8,
-                                colors: [
-                                  const Color(0xFFFF8A8A), // Light red highlight (glossy top)
-                                  const Color(0xFFEE4444), // Bright red
-                                  const Color(0xFFCC2222), // Deep red
-                                  const Color(0xFFAA1111), // Darker red (bottom shadow)
-                                ],
-                                stops: const [0.0, 0.3, 0.7, 1.0],
-                              ),
-                              boxShadow: [
-                                // Main shadow
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                                // Inner highlight
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(-5, -5),
-                                ),
-                              ],
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                // Glossy overlay
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.4),
-                                    Colors.white.withValues(alpha: 0.0),
-                                    Colors.black.withValues(alpha: 0.1),
-                                  ],
-                                  stops: const [0.0, 0.5, 1.0],
-                                ),
-                              ),
-                              child: Center(
-                                child: _isSendingSOS 
-                                  ? const Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        CircularProgressIndicator(
-                                          color: AppTheme.pureWhite,
-                                          strokeWidth: 3,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Sending...',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppTheme.pureWhite,
-                                            shadows: [
-                                              Shadow(
-                                                offset: Offset(0, 2),
-                                                blurRadius: 4,
-                                                color: Colors.black38,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Text(
-                                      'SOS',
-                                      style: TextStyle(
-                                        fontSize: sosButtonSize * 0.22,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppTheme.pureWhite,
-                                        letterSpacing: 4,
-                                        shadows: const [
-                                          Shadow(
-                                            offset: Offset(0, 3),
-                                            blurRadius: 6,
-                                            color: Colors.black38,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                              ),
-                            ),
-                          ),
+                          // Main SOS Button with Design Tokens
+                          _SosButton(isSending: _isSendingSOS),
                         ],
                       ),
                     ),
@@ -685,7 +591,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _holdProgress > 0 
                         ? 'Keep holding... ${((1 - _holdProgress) * 3).ceil()}s'
                         : 'Hold for 3 seconds to send alert',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 16,
                         color: _holdProgress > 0 ? AppTheme.accentRed : AppTheme.neutralGrey,
                         fontWeight: FontWeight.w600,
@@ -707,12 +613,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         controller: _messageController,
                         maxLines: 1,
                         maxLength: 100,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Optional Message',
+                          hintStyle: GoogleFonts.inter(),
                           border: InputBorder.none,
-                          counterStyle: TextStyle(fontSize: 12),
+                          counterStyle: GoogleFonts.inter(
+                            fontSize: 12,
+                          ),
                         ),
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           color: AppTheme.primaryBlack,
                         ),
@@ -991,5 +900,147 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
       }
     }
+  }
+}
+
+/// SOS Button with design tokens
+class _SosButton extends StatelessWidget {
+  final bool isSending;
+  
+  const _SosButton({this.isSending = false});
+
+  // === DESIGN TOKENS (DO NOT CHANGE) ===
+  static const double buttonDiameter = 196.0;
+  static const double glowDiameter = 205.8;
+  static const double borderWidth = 6.0;
+  static const double fontSize = 44.1;
+
+  static const Color redLight = Color(0xFFFF4D4D);
+  static const Color redDark = Color(0xFFB30000);
+  static const Color borderRed = Color(0xFFCC0000);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: glowDiameter,
+      height: glowDiameter,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // === OUTER GLOW ===
+          Container(
+            width: glowDiameter,
+            height: glowDiameter,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromRGBO(255, 0, 0, 0.15),
+                  blurRadius: 40,
+                  spreadRadius: 6,
+                ),
+              ],
+            ),
+          ),
+
+          // === MAIN BUTTON ===
+          Container(
+            width: buttonDiameter,
+            height: buttonDiameter,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const RadialGradient(
+                center: Alignment(-0.3, -0.3), // ≈ 35% / 35%
+                radius: 0.8,
+                colors: [
+                  redLight,
+                  redDark,
+                ],
+              ),
+              border: Border.all(
+                color: borderRed,
+                width: borderWidth,
+              ),
+              boxShadow: const [
+                // Inner top highlight
+                BoxShadow(
+                  color: Color.fromRGBO(255, 255, 255, 0.45),
+                  offset: Offset(0, 4),
+                  blurRadius: 8,
+                ),
+                // Inner bottom shadow
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.4),
+                  offset: Offset(0, -4),
+                  blurRadius: 8,
+                ),
+                // Ambient glow
+                BoxShadow(
+                  color: Color.fromRGBO(179, 0, 0, 0.25),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                // === GLOSS HIGHLIGHT ===
+                Positioned(
+                  top: buttonDiameter * 0.08,
+                  left: buttonDiameter * 0.15,
+                  child: Container(
+                    width: buttonDiameter * 0.70,
+                    height: buttonDiameter * 0.35,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color.fromRGBO(255, 255, 255, 0.5),
+                          Color.fromRGBO(255, 255, 255, 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // === TEXT ===
+                Center(
+                  child: isSending
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Sending...',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        'SOS',
+                        style: GoogleFonts.inter(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                          letterSpacing: -0.5,
+                          color: Colors.white,
+                        ),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
