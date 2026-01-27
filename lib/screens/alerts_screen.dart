@@ -6,7 +6,6 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/providers/alerts_provider.dart';
 import '../core/providers/location_provider.dart';
-import '../widgets/rrt_branding.dart';
 
 /// Alerts screen showing nearby SOS situations
 /// Watches activeAlertsProvider to display real-time emergency alerts
@@ -76,87 +75,31 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
     // Watch both alerts and location providers for real-time updates
     final alerts = ref.watch(activeAlertsProvider);
     final locationService = ref.watch(locationServiceProvider);
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Fixed header
-            Container(
-              padding: const EdgeInsets.all(AppConstants.screenMargins),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  
-                  // App Header
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: RrtLogo(),
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // App Title
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: RrtWordmark(
-                      titleSize: 32,
-                      subtitleSize: 32,
-                    ),
-                  ),
-                  
-
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
+    
+    // Return only the alerts content (header and footer are handled by MainNavigationScreen)
+    return FutureBuilder<Position?>(
+      future: _getUserPosition(locationService),
+      builder: (context, positionSnapshot) {
+        final userPosition = positionSnapshot.data;
+        
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
+          itemCount: alerts.length,
+          itemBuilder: (context, index) {
+            // Real alerts
+            final alert = alerts[index];
             
-            // Alerts content - shows real alerts from provider
-            // Automatic cleanup runs in background every 5 minutes
-            Expanded(
-              child: FutureBuilder<Position?>(
-                future: _getUserPosition(locationService),
-                builder: (context, positionSnapshot) {
-                  final userPosition = positionSnapshot.data;
-                  
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-                    itemCount: alerts.length,
-                    itemBuilder: (context, index) {
-                      // Real alerts
-                      final alert = alerts[index];
-                      
-                      // Calculate distance for this alert
-                      final distance = _calculateDistance(
-                        alert['exact_lat'] as double?,
-                        alert['exact_lng'] as double?,
-                        userPosition,
-                      );
-                      
-                      return _buildAlertCard(alert, distance);
-                    },
-                  );
-                },
-              ),
-            ),
+            // Calculate distance for this alert
+            final distance = _calculateDistance(
+              alert['exact_lat'] as double?,
+              alert['exact_lng'] as double?,
+              userPosition,
+            );
             
-            // Footer
-            Container(
-              padding: const EdgeInsets.all(AppConstants.screenMargins),
-              child: const Text(
-                'CONTACT DETAILS ARE VISIBLE ONLY WHILE THIS\nALERT IS ACTIVE.',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textSecondary,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      ),
+            return _buildAlertCard(alert, distance);
+          },
+        );
+      },
     );
   }
 

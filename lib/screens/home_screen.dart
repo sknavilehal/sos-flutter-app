@@ -9,7 +9,6 @@ import '../core/providers/location_provider.dart';
 import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
 import '../services/district_subscription_service.dart';
-import '../widgets/rrt_branding.dart';
 
 /// Home screen with location display and SOS button
 class HomeScreen extends ConsumerStatefulWidget {
@@ -215,37 +214,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final availableHeight = screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom;
     final sosButtonSize = (availableHeight * 0.25).clamp(150.0, 200.0); // Responsive SOS button size
     
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(AppConstants.screenMargins),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              const SizedBox(height: 8),
-              
-              // App Header
-              const Row(
-                children: [
-                  RrtLogo(),
-                ],
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // App Title
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: RrtWordmark(
-                  titleSize: 32,
-                  subtitleSize: 32,
-                ),
-              ),
-              
-              const SizedBox(height: 8),
-              
+    // Return only the home screen content (header is handled by MainNavigationScreen)
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.screenMargins),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
               // Backend Status
               Consumer(
                 builder: (context, ref, child) {
@@ -740,9 +715,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               
               // Bottom spacer
               const SizedBox(height: 40),
-            ],
-            ),
-          ),
+          ],
         ),
       ),
     );

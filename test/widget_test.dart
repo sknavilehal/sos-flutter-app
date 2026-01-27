@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rrt_flutter_app/main.dart';
+import 'package:rrt_sos/main.dart';
 
 void main() {
   testWidgets('RRT App splash screen test', (WidgetTester tester) async {

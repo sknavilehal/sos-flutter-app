@@ -3,7 +3,6 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
 import '../widgets/labeled_text_field.dart';
-import '../widgets/rrt_branding.dart';
 import '../widgets/rrt_primary_button.dart';
 
 /// Profile screen showing user information
@@ -45,33 +44,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.screenMargins),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              
-              // App Header
-              const Row(
-                children: [
-                  RrtLogo(),
-                ],
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // App Title
-              const RrtWordmark(
-                titleSize: 32,
-                subtitleSize: 32,
-              ),
-              
-              const SizedBox(height: 12),
-              
+    // Return only the profile screen content (header is handled by MainNavigationScreen)
+    return Padding(
+      padding: const EdgeInsets.all(AppConstants.screenMargins),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               // Flexible spacer to center form content
               const Expanded(
                 child: Center(
@@ -196,9 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Expanded(
                 child: SizedBox(),
               ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

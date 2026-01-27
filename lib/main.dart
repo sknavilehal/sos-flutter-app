@@ -8,7 +8,9 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_district_service.dart';
-import 'screens/splash_screen.dart';
+import 'core/services/profile_service.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'screens/alerts_screen.dart';
 
 /// Top-level function for handling background FCM messages
@@ -71,8 +73,8 @@ class RRTApp extends ConsumerWidget {
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey, // Attach global navigator key
-      home: FutureBuilder(
-        future: _initializeServices(ref),
+      home: FutureBuilder<Widget>(
+        future: _initializeAndCheckProfile(ref),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
@@ -81,7 +83,8 @@ class RRTApp extends ConsumerWidget {
               ),
             );
           }
-          return const SplashScreen(); // Start with splash to check profile
+          // Return the appropriate screen based on profile status
+          return snapshot.data ?? const OnboardingScreen();
         },
       ),
       debugShowCheckedModeBanner: false,
@@ -92,8 +95,8 @@ class RRTApp extends ConsumerWidget {
     );
   }
   
-  /// Initialize async services in parallel for faster startup
-  Future<void> _initializeServices(WidgetRef ref) async {
+  /// Initialize async services and check profile status
+  Future<Widget> _initializeAndCheckProfile(WidgetRef ref) async {
     // Initialize both services in parallel to avoid blocking
     // Notification service (critical) and District service (non-critical) run simultaneously
     await Future.wait([
@@ -110,5 +113,22 @@ class RRTApp extends ConsumerWidget {
       // Critical - must initialize quickly for push notifications to work
       NotificationService.initialize(navigatorKey, ref),
     ]);
+    
+    // Check if profile exists to determine initial screen
+    try {
+      final name = await ProfileService.getUserName();
+      final mobile = await ProfileService.getUserMobile();
+      
+      if (name != null && name.isNotEmpty && mobile != null && mobile.isNotEmpty) {
+        // Profile exists, go to main app
+        return const MainNavigationScreen();
+      } else {
+        // No profile, start with onboarding
+        return const OnboardingScreen();
+      }
+    } catch (e) {
+      // If there's an error, show onboarding to be safe
+      return const OnboardingScreen();
+    }
   }
 }

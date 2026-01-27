@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/services/profile_service.dart';
 import 'profile_create_screen.dart';
-import '../widgets/rrt_branding.dart';
+import '../widgets/rrt_screen_layout.dart';
 import '../widgets/rrt_primary_button.dart';
 
 /// Terms and Conditions screen shown once on first app launch
@@ -40,46 +40,40 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.pureWhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Section
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-              child: Column(
-                children: [
-                  // App Branding
-                  const RrtBranding(
-                    scale: 0.8,
-                    showBorder: true,
-                    spacing: 32,
-                    alignment: CrossAxisAlignment.center,
+        child: RrtScreenContent(
+          showHeader: true,
+          headerAlignment: CrossAxisAlignment.start,
+          headerTitleSize: 28,
+          headerSubtitleSize: 28,
+          useScrollView: false,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          body: Column(
+            children: [
+              // Page Title
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  'Terms &\nConditions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlack,
+                    height: 1.2,
                   ),
-                  const SizedBox(height: 32),
-                  
-                  // Page Title
-                  const Text(
-                    'Terms &\nConditions',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlack,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            
-            // Terms Content (Scrollable)
-            Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              
+              // Terms Content (Scrollable)
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     // Introduction
                     _buildIntroText(
                       'By downloading, installing, or using the Rapid Response Team (RRT) mobile application ("App"), you agree to these Terms & Conditions ("Terms"). If you do not agree, please do not use the App.',
@@ -265,11 +259,13 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                       ),
                     ),
                     const SizedBox(height: 100), // Extra space for button
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       // Accept Button (Fixed at bottom)
