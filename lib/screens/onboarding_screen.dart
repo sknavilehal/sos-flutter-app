@@ -27,11 +27,25 @@ class OnboardingScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Tagline
+                Text(
+                  'WHERE EMPATHY MEETS ACTION',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    color: AppTheme.primaryBlack,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(height: 16),
                 // Description
                 Text(
                   'Built for animal welfare, feeders, and volunteers.\nFind help, and reach out when in need.',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontFamily: 'Inter',
+                    fontSize: 20,
                     color: AppTheme.primaryBlack,
                     height: 1.5,
                     letterSpacing: -0.01,

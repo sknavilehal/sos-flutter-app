@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 1: // Alerts screen
         return const Center(
           child: Text(
-            'CONTACT DETAILS ARE VISIBLE ONLY WHILE THIS\nALERT IS ACTIVE.',
+            'CONTACT DETAILS ARE VISIBLE ONLY WHILE THIS AN ALERT IS ACTIVE.',
             style: TextStyle(
               fontSize: 11,
               color: AppTheme.textSecondary,
