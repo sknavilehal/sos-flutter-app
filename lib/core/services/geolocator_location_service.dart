@@ -11,15 +11,14 @@ class GeolocatorLocationService implements LocationService {
   @override
   Future<LocationData?> getCurrentLocation() async {
     try {
-      // Check permissions and services
+      // Check permissions first - DO NOT automatically request
       if (!await hasLocationPermission()) {
-        final permissionGranted = await requestLocationPermission();
-        if (!permissionGranted) {
-          return null;
-        }
+        debugPrint('Location permission not granted');
+        return null;
       }
 
       if (!await isLocationServiceEnabled()) {
+        debugPrint('Location services not enabled');
         return null;
       }
 

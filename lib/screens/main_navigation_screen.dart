@@ -59,7 +59,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 showHeader: true,
                 headerAlignment: CrossAxisAlignment.start,
                 useScrollView: false, // Each screen manages its own scroll behavior
-                body: _screens[_currentIndex],
+                body: IndexedStack(
+                  index: _currentIndex,
+                  children: _screens,
+                ),
                 footer: _getFooterForCurrentTab(),
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/profile_service.dart';
 
 /// State notifier for managing active SOS alerts
 /// This provider manages the list of active emergency alerts received via FCM
@@ -45,11 +46,21 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       final currentTime = DateTime.now().millisecondsSinceEpoch;
       final validAlerts = <Map<String, dynamic>>[];
       
+      // Get user's SOS ID to filter out their own alerts
+      final userId = await ProfileService.getUserId();
+      final userSosId = 'sos_$userId';
+      
       // Parse each stored alert and check if it's still valid (not expired)
       for (final alertJson in alertsJson) {
         try {
           final alert = jsonDecode(alertJson) as Map<String, dynamic>;
           final alertTimestamp = alert['timestamp'] as int? ?? 0;
+          final alertSosId = alert['sos_id'] as String?;
+          
+          // Skip user's own alerts
+          if (alertSosId == userSosId) {
+            continue;
+          }
           
           // Check if alert is within TTL (Time To Live)
           final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
@@ -94,6 +105,16 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     final sosId = alert['sos_id'] as String?;
     if (sosId != null && state.any((a) => a['sos_id'] == sosId)) {
       return; // Alert already exists
+    }
+    
+    // Don't show user's own SOS alerts to themselves
+    if (sosId != null) {
+      final userId = await ProfileService.getUserId();
+      final userSosId = 'sos_$userId';
+      if (sosId == userSosId) {
+        debugPrint('Ignoring own SOS alert: $sosId');
+        return; // Don't add user's own alert
+      }
     }
     
     // Add alert to the beginning of the list (newest first)

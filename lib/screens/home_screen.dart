@@ -19,7 +19,10 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; // Keep state alive when switching tabs
+  
   bool _isSendingSOS = false;
   bool _isSOSActive = false;
   String? _activeSosId;
@@ -51,15 +54,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _loadSOSState();
     _initializeFutures();
-    _initializeDistrictSubscription();
+    _checkAndInitializeDistrictSubscription(); // Only if permission exists
     _startPeriodicServerHealthCheck();
   }
   
-  /// Initialize district subscription for receiving SOS alerts
-  void _initializeDistrictSubscription() {
-    // Run district subscription in background
+  /// Check if we have permission, then initialize district subscription
+  void _checkAndInitializeDistrictSubscription() {
     Future.microtask(() async {
       final locationService = ref.read(locationServiceProvider);
+      
+      // Only initialize if we have permission
+      final hasPermission = await locationService.hasLocationPermission();
+      if (!hasPermission) {
+        debugPrint('Skipping district subscription - no location permission');
+        return;
+      }
+      
       final district = await _districtService.initializeDistrictSubscription(locationService);
       if (district != null && mounted) {
         setState(() {
@@ -211,6 +221,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     // Return only the home screen content (header is handled by MainNavigationScreen)
     return SingleChildScrollView(
       child: Padding(
@@ -340,8 +351,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             TextButton(
                               onPressed: () async {
-                                await locationService.requestLocationPermission();
-                                _refreshFutures();
+                                final granted = await locationService.requestLocationPermission();
+                                if (granted) {
+                                  // Permission granted - refresh UI and initialize district subscription
+                                  _refreshFutures();
+                                  _checkAndInitializeDistrictSubscription();
+                                }
                               },
                               child: const Text('Allow'),
                             ),
@@ -683,11 +698,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     try {
+      // Check location permission first
+      final hasPermission = await locationService.hasLocationPermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Location permission required. Please allow location access first.'),
+              backgroundColor: AppTheme.accentRed,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+      
       // Get current location from location service
       final locationData = await locationService.getCurrentLocation();
       
       if (locationData == null) {
-        throw Exception('Unable to get current location. Please enable location services and try again.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Unable to get current location. Please check your location settings.'),
+              backgroundColor: AppTheme.accentRed,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
       }
 
       // Convert LocationData to Position for SOS service
@@ -704,8 +743,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         speedAccuracy: 0.0,
       );
 
-      // Generate unique SOS ID
-      final sosId = 'sos_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecond}';
+      // Generate unique SOS ID based on stable user ID
+      final userId = await ProfileService.getUserId();
+      final sosId = 'sos_${userId}';
 
       // Get user profile data for emergency contact info
       final userName = await ProfileService.getUserName() ?? 'Emergency Contact';
@@ -775,9 +815,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Clean error message without exception prefix
+        final errorMessage = e.toString().replaceFirst('Exception: ', '').replaceFirst('Error: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Emergency alert failed: ${e.toString()}'),
+            content: Text('❌ Emergency alert failed: $errorMessage'),
             backgroundColor: AppTheme.accentRed,
             duration: const Duration(seconds: 5),
           ),
@@ -804,11 +846,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     try {
+      // Check location permission first
+      final hasPermission = await locationService.hasLocationPermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Location permission required to stop alert.'),
+              backgroundColor: AppTheme.accentRed,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+      
       // Get current location for the stop request
       final locationData = await locationService.getCurrentLocation();
       
       if (locationData == null) {
-        throw Exception('Unable to get current location');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Unable to get current location. Please check your location settings.'),
+              backgroundColor: AppTheme.accentRed,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
       }
 
       // Convert LocationData to Position for SOS service
@@ -885,9 +951,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Clean error message without exception prefix
+        final errorMessage = e.toString().replaceFirst('Exception: ', '').replaceFirst('Error: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Stop request failed: ${e.toString()}'),
+            content: Text('❌ Stop request failed: $errorMessage'),
             backgroundColor: AppTheme.accentRed,
             duration: const Duration(seconds: 5),
           ),
