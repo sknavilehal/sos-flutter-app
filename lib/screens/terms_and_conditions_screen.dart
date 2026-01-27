@@ -45,10 +45,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
         child: RrtScreenContent(
           showHeader: true,
           headerAlignment: CrossAxisAlignment.start,
-          headerTitleSize: 28,
-          headerSubtitleSize: 28,
           useScrollView: false,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
           body: Column(
             children: [
               // Page Title

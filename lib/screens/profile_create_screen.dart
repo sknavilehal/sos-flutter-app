@@ -36,10 +36,7 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
         child: RrtScreenContent(
           showHeader: true,
           headerAlignment: CrossAxisAlignment.start,
-          headerTitleSize: 40,
-          headerSubtitleSize: 40,
           useScrollView: false,
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
           body: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.only(

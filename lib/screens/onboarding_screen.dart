@@ -18,10 +18,7 @@ class OnboardingScreen extends StatelessWidget {
         child: RrtScreenContent(
           showHeader: true,
           headerAlignment: CrossAxisAlignment.start,
-          headerTitleSize: 40,
-          headerSubtitleSize: 40,
           useScrollView: false,
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
           body: const Padding(
             padding: EdgeInsets.only(
               left: AppConstants.defaultPadding + 2,
