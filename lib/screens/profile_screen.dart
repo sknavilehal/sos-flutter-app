@@ -44,137 +44,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Return only the profile screen content (header is handled by MainNavigationScreen)
-    return Padding(
-      padding: const EdgeInsets.all(AppConstants.screenMargins),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-              // Flexible spacer to center form content
-              const Expanded(
-                child: Center(
-                  child: SizedBox(),
+    // Return Scaffold with bottomNavigationBar for button positioning
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.screenMargins),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section Title
+              const Text(
+                'Your Profile',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryBlack,
+                  letterSpacing: -0.01,
                 ),
               ),
               
-              // Form content
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Section Title
-                  const Text(
-                    'Your Profile',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.primaryBlack,
-                      letterSpacing: -0.01,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  // Name Field
-                  LabeledTextField(
-                    label: 'NAME',
-                    controller: _nameController,
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Mobile Number Field
-                  LabeledTextField(
-                    label: 'MOBILE NUMBER',
-                    controller: _mobileController,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    counterText: '',
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Update Profile Button
-                  RrtPrimaryButton(
-                    label: 'UPDATE PROFILE',
-                    height: AppConstants.primaryButtonHeight,
-                    onTap: () async {
-                      final name = _nameController.text.trim();
-                      final mobile = _mobileController.text.trim();
-                      
-                      if (name.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please enter your name'),
-                            backgroundColor: AppTheme.errorColor,
-                          ),
-                        );
-                        return;
-                      }
-                      
-                      if (mobile.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please enter your mobile number'),
-                            backgroundColor: AppTheme.errorColor,
-                          ),
-                        );
-                        return;
-                      }
-                      
-                      if (!ProfileService.isValidIndianMobile(mobile)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please enter a valid 10-digit mobile number'),
-                            backgroundColor: AppTheme.errorColor,
-                          ),
-                        );
-                        return;
-                      }
-                      
-                      try {
-                        await ProfileService.saveProfile(
-                          name: name,
-                          mobile: mobile,
-                        );
-                        
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profile updated successfully'),
-                              backgroundColor: AppTheme.successColor,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to update profile. Please try again.'),
-                              backgroundColor: AppTheme.errorColor,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ],
+              const SizedBox(height: 24),
+              
+              // Name Field
+              LabeledTextField(
+                label: 'NAME',
+                controller: _nameController,
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               
-              // Bottom spacer
-              const Expanded(
-                child: SizedBox(),
+              const SizedBox(height: 24),
+              
+              // Mobile Number Field
+              LabeledTextField(
+                label: 'MOBILE NUMBER',
+                controller: _mobileController,
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                counterText: '',
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-        ],
+              
+              const SizedBox(height: AppConstants.brandBodySpacing),
+              
+              // Privacy Notice
+              const Text(
+                'MANDATORY FOR ALERTS.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textSecondary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'YOUR PHONE NUMBER IS EXPOSED ONLY WHEN AN SOS ALERT IS ACTIVE.',
+                style: TextStyle(
+                  fontSize: 8,
+                  color: AppTheme.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+      // Bottom button without footer badges
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: const BoxDecoration(
+          color: AppTheme.backgroundColor,
+        ),
+        child: RrtPrimaryButton(
+          label: 'UPDATE PROFILE',
+          height: AppConstants.primaryButtonHeight,
+          onTap: () async {
+            final name = _nameController.text.trim();
+            final mobile = _mobileController.text.trim();
+            
+            if (name.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter your name'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+              return;
+            }
+            
+            if (mobile.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter your mobile number'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+              return;
+            }
+            
+            if (!ProfileService.isValidIndianMobile(mobile)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter a valid 10-digit mobile number'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+              return;
+            }
+            
+            try {
+              await ProfileService.saveProfile(
+                name: name,
+                mobile: mobile,
+              );
+              
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Profile updated successfully'),
+                    backgroundColor: AppTheme.successColor,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to update profile. Please try again.'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ),
     );
   }
