@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
+import '../core/providers/alerts_provider.dart';
 import '../widgets/rrt_screen_layout.dart';
 import 'home_screen.dart';
 import 'alerts_screen.dart';
@@ -8,15 +10,41 @@ import 'help_screen.dart';
 
 /// Main navigation screen with bottom navigation bar
 /// Uses shared RrtScreenContent layout for consistent header across all tabs
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Register lifecycle observer to detect when app returns to foreground
+    WidgetsBinding.instance.addObserver(this);
+  }
+  
+  @override
+  void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // When app returns to foreground (resumed), reload alerts from storage
+    // This ensures alerts added while app was in background are displayed
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('App resumed - refreshing alerts from storage (MainNavigationScreen)');
+      ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+    }
+  }
   
   final List<Widget> _screens = [
     const HomeScreen(),

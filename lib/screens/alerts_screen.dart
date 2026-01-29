@@ -17,7 +17,34 @@ class AlertsScreen extends ConsumerStatefulWidget {
   ConsumerState<AlertsScreen> createState() => _AlertsScreenState();
 }
 
-class _AlertsScreenState extends ConsumerState<AlertsScreen> {
+class _AlertsScreenState extends ConsumerState<AlertsScreen> with WidgetsBindingObserver {
+  
+  @override
+  void initState() {
+    super.initState();
+    // Register lifecycle observer to detect when app returns to foreground
+    WidgetsBinding.instance.addObserver(this);
+  }
+  
+  @override
+  void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // When app returns to foreground (resumed), reload alerts from storage
+    // This ensures alerts added while app was in background are displayed
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('App resumed - refreshing alerts from storage');
+      ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+    }
+  }
+  
   /// Get user's current position for distance calculations
   /// Returns Position object or null if unavailable
   Future<Position?> _getUserPosition(dynamic locationService) async {

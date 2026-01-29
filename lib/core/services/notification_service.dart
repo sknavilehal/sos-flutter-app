@@ -85,7 +85,8 @@ class NotificationService {
         _handleForegroundMessageWithNotification(message);
       });
       
-      // Handle messages when app is in background but not terminated
+      // Handle notification taps when app is in background but not terminated
+      // This fires when user taps a notification, bringing the app to foreground
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         handleNotificationTap(message);
       });
@@ -156,25 +157,29 @@ class NotificationService {
     }
   }
   
-  /// Handle notification tap
+  // Handle local notification tap (for foreground notifications)
   static void _onNotificationTapped(NotificationResponse response) {
-    // Navigate to alerts screen
-    _navigatorKey?.currentState?.pushNamed('/alerts');
+    // Navigate to alerts screen if navigator is available
+    if (_navigatorKey?.currentState != null) {
+      _navigatorKey!.currentState!.pushNamed('/alerts');
+    }
   }
 
-  /// Handle notification tap when app is in foreground or background
-  /// Navigates to appropriate screen based on notification data
+  // Handle notification tap when app is opened from background or terminated state
   static Future<void> handleNotificationTap(RemoteMessage message) async {
     final data = message.data;
     
+    // Small delay to ensure navigator is ready
+    await Future.delayed(const Duration(milliseconds: 100));
+    
     // Check if this is an alerts-related notification
-    if (data['screen'] == 'alerts' || data['type'] == 'new_sos') {
-      // Navigate to alerts screen using named route
-      _navigatorKey?.currentState?.pushNamed('/alerts');
+    if (data['screen'] == 'alerts' || data['type'] == 'sos_alert') {
+      // Navigate to alerts screen if navigator is available
+      if (_navigatorKey?.currentState != null) {
+        _navigatorKey!.currentState!.pushNamed('/alerts');
+      }
     }
     
-    // Handle the notification data (add to alerts if it's a new SOS)
-    await _handleMessageData(data);
   }
 
   /// Process FCM message data and update app state accordingly
