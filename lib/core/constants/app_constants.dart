@@ -2,6 +2,9 @@
 class AppConstants {
   // App Information
   static const String appName = 'RRT SOS Alert';
+  static const String brandTitle = 'Rapid';
+  static const String brandSubtitle = 'Response Team';
+  static const String brandFullName = '$brandTitle $brandSubtitle';
 
   // Design Token UI Constants
   static const double screenMargins = 24.0; // Left/right screen margins

@@ -125,7 +125,11 @@ class RrtScreenContent extends StatelessWidget {
           children: [
             if (showHeader) ...[
               const SizedBox(height: 8),
-              _buildHeader(),
+              RrtHeaderBranding(
+                alignment: headerAlignment,
+                titleSize: headerTitleSize,
+                subtitleSize: headerSubtitleSize,
+              ),
               const SizedBox(height: 6),
             ],
             body,
@@ -152,7 +156,11 @@ class RrtScreenContent extends StatelessWidget {
               crossAxisAlignment: headerAlignment,
               children: [
                 const SizedBox(height: 8),
-                _buildHeader(),
+                RrtHeaderBranding(
+                  alignment: headerAlignment,
+                  titleSize: headerTitleSize,
+                  subtitleSize: headerSubtitleSize,
+                ),
                 const SizedBox(height: 6),
               ],
             ),
@@ -175,29 +183,5 @@ class RrtScreenContent extends StatelessWidget {
     );
   }
 
-  /// Build the header with Logo + Wordmark
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: headerAlignment,
-      children: [
-        // Logo
-        Align(
-          alignment: headerAlignment == CrossAxisAlignment.center
-              ? Alignment.center
-              : Alignment.centerLeft,
-          child: const RrtLogo(),
-        ),
-        const SizedBox(height: 8),
-        // Wordmark (Title + Subtitle)
-        RrtWordmark(
-          titleSize: headerTitleSize,
-          subtitleSize: headerSubtitleSize,
-          crossAxisAlignment: headerAlignment,
-          textAlign: headerAlignment == CrossAxisAlignment.center
-              ? TextAlign.center
-              : TextAlign.left,
-        ),
-      ],
-    );
-  }
+  // Header layout is centralized in RrtHeaderBranding.
 }

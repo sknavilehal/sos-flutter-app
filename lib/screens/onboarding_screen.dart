@@ -3,8 +3,7 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import 'terms_and_conditions_screen.dart';
 import '../widgets/rrt_screen_layout.dart';
-import '../widgets/rrt_footer_badges.dart';
-import '../widgets/rrt_primary_button.dart';
+import '../widgets/onboarding_flow_bottom_bar.dart';
 
 /// Onboarding/Welcome screen
 class OnboardingScreen extends StatelessWidget {
@@ -76,34 +75,14 @@ class OnboardingScreen extends StatelessWidget {
         ),
       ),
       // Bottom button and footer (like Terms screen)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        decoration: const BoxDecoration(
-          color: AppTheme.backgroundColor,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Get Started Button
-            RrtPrimaryButton(
-              label: 'GET STARTED',
-              height: AppConstants.primaryButtonHeight,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TermsAndConditionsScreen()),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Footer badges
-            const RrtFooterBadges(),
-            
-            const SizedBox(height: 10),
-          ],
-        ),
+      bottomNavigationBar: OnboardingFlowBottomBar(
+        label: 'GET STARTED',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TermsAndConditionsScreen()),
+          );
+        },
       ),
     );
   }

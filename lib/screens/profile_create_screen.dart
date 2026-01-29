@@ -6,8 +6,7 @@ import '../core/services/profile_service.dart';
 import 'main_navigation_screen.dart';
 import '../widgets/labeled_text_field.dart';
 import '../widgets/rrt_screen_layout.dart';
-import '../widgets/rrt_footer_badges.dart';
-import '../widgets/rrt_primary_button.dart';
+import '../widgets/onboarding_flow_bottom_bar.dart';
 
 /// Profile creation screen for first-time setup
 class ProfileCreateScreen extends StatefulWidget {
@@ -120,85 +119,65 @@ class _ProfileCreateScreenState extends State<ProfileCreateScreen> {
         ),
       ),
       // Bottom button and footer
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(AppConstants.screenMargins),
-        decoration: const BoxDecoration(
-          color: AppTheme.backgroundColor,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Save & Proceed Button
-            RrtPrimaryButton(
-              label: 'SAVE & PROCEED',
-              height: AppConstants.primaryButtonHeight,
-              onTap: () async {
-                final name = _nameController.text.trim();
-                final mobile = _mobileController.text.trim();
-                
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter your name'),
-                      backgroundColor: AppTheme.errorColor,
-                    ),
-                  );
-                  return;
-                }
-                
-                if (mobile.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter your mobile number'),
-                      backgroundColor: AppTheme.errorColor,
-                    ),
-                  );
-                  return;
-                }
-                
-                if (!ProfileService.isValidIndianMobile(mobile)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid 10-digit mobile number'),
-                      backgroundColor: AppTheme.errorColor,
-                    ),
-                  );
-                  return;
-                }
-                
-                try {
-                  await ProfileService.saveProfile(
-                    name: name,
-                    mobile: mobile,
-                  );
-                  
-                  if (context.mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to save profile. Please try again.'),
-                        backgroundColor: AppTheme.errorColor,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
+      bottomNavigationBar: OnboardingFlowBottomBar(
+        label: 'SAVE & PROCEED',
+        onTap: () async {
+          final name = _nameController.text.trim();
+          final mobile = _mobileController.text.trim();
+          
+          if (name.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter your name'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
+          
+          if (mobile.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter your mobile number'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
+          
+          if (!ProfileService.isValidIndianMobile(mobile)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter a valid 10-digit mobile number'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+            return;
+          }
+          
+          try {
+            await ProfileService.saveProfile(
+              name: name,
+              mobile: mobile,
+            );
             
-            const SizedBox(height: 20),
-            
-            // Footer badges
-            const RrtFooterBadges(),
-            
-            const SizedBox(height: 10),
-          ],
-        ),
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to save profile. Please try again.'),
+                  backgroundColor: AppTheme.errorColor,
+                ),
+              );
+            }
+          }
+        },
       ),
     );
   }
