@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +11,7 @@ import '../core/providers/location_provider.dart';
 import '../core/services/profile_service.dart';
 import '../services/sos_service.dart';
 import '../services/district_subscription_service.dart';
+import '../widgets/rrt_primary_button.dart';
 
 /// Home screen with location display and SOS button
 class HomeScreen extends ConsumerStatefulWidget {
@@ -61,6 +63,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   /// Check if we have permission, then initialize district subscription
   void _checkAndInitializeDistrictSubscription() {
     Future.microtask(() async {
+      // DEBUG MODE: Set arbitrary district for testing on emulator
+      if (kDebugMode) {
+        debugPrint('DEBUG MODE: Setting test district for emulator');
+        if (mounted) {
+          setState(() {
+            _currentDistrict = 'udupi'; // Change this to any district you want to test
+          });
+        }
+        return;
+      }
+      
       final locationService = ref.read(locationServiceProvider);
       
       // Only initialize if we have permission
@@ -222,7 +235,338 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    // Return only the home screen content (header is handled by MainNavigationScreen)
+    
+    // When SOS is active, use a layout with bottom button similar to profile screen
+    if (_isStateLoaded && _isSOSActive) {
+      return Column(
+        children: [
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppConstants.screenMargins + 2, // left
+                  8, // top - reduced from 24
+                  AppConstants.screenMargins, // right
+                  AppConstants.screenMargins, // bottom
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Backend Status
+                    Consumer(
+                      builder: (context, ref, child) {
+                        return FutureBuilder<bool>(
+                          future: _serverConnectionFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Row(
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(strokeWidth: 1.5),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Checking server...', style: TextStyle(fontSize: 12, color: AppTheme.neutralGrey)),
+                                ],
+                              );
+                            }
+                            
+                            final isConnected = snapshot.data ?? false;
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 2),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isConnected ? Colors.green : AppTheme.accentRed,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isConnected ? 'SERVER CONNECTED' : 'SERVER OFFLINE',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontFamily: 'JetBrainsMono',
+                                      color: isConnected ? Colors.green : AppTheme.accentRed,
+                                    ),
+                                  ),
+                                  if (!isConnected) ...[
+                                    const Spacer(),
+                                    TextButton(
+                                      onPressed: _refreshFutures,
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Retry', style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Location Status
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final locationService = ref.read(locationServiceProvider);
+                        
+                        return FutureBuilder<bool>(
+                          future: _locationPermissionFuture,
+                          builder: (context, permissionSnapshot) {
+                            if (permissionSnapshot.connectionState == ConnectionState.waiting) {
+                              return const Row(
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.neutralGrey,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Checking location...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppTheme.neutralGrey,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            
+                            final hasPermission = permissionSnapshot.data ?? false;
+                            
+                            if (!hasPermission) {
+                              return Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_off,
+                                    color: AppTheme.accentRed,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'Location permission required',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: AppTheme.accentRed,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      final granted = await locationService.requestLocationPermission();
+                                      if (granted) {
+                                        _refreshFutures();
+                                        _checkAndInitializeDistrictSubscription();
+                                      }
+                                    },
+                                    child: const Text('Allow'),
+                                  ),
+                                ],
+                              );
+                            }
+                            
+                            _locationAddressFuture ??= locationService.getCurrentAddress();
+                            
+                            return FutureBuilder<String?>(
+                              future: _locationAddressFuture,
+                              builder: (context, addressSnapshot) {
+                                if (addressSnapshot.connectionState == ConnectionState.waiting) {
+                                  return const Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppTheme.neutralGrey,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Getting location...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppTheme.neutralGrey,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                
+                                final address = addressSnapshot.data;
+                                
+                                return Row(
+                                  children: [
+                                    Icon(
+                                      address != null && address != 'Address unavailable' 
+                                        ? Icons.location_on 
+                                        : Icons.location_off,
+                                      color: address != null && address != 'Address unavailable'
+                                        ? AppTheme.primaryBlack
+                                        : AppTheme.accentRed,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        address ?? 'Location unavailable',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: address != null && address != 'Address unavailable'
+                                            ? AppTheme.primaryBlack
+                                            : AppTheme.accentRed,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.refresh,
+                                        size: 20,
+                                        color: AppTheme.neutralGrey,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _locationAddressFuture = null;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Active SOS State Content
+                    const Text(
+                      'Emergency SOS Active',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.accentRed,
+                        letterSpacing: -0.01,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Location Display
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(0),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            color: AppTheme.accentRed,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _activeLocation ?? 'Emergency Location',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.primaryBlack,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'People in your district have been notified.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.neutralGrey,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Bottom Button - Positioned like profile screen's bottomNavigationBar
+          Container(
+            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            decoration: const BoxDecoration(
+              color: AppTheme.backgroundColor,
+            ),
+            child: _isSendingSOS
+              ? Container(
+                  width: double.infinity,
+                  height: AppConstants.primaryButtonHeight,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryBlack,
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: AppTheme.pureWhite,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'STOPPING...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.pureWhite,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : RrtPrimaryButton(
+                  label: 'STOP SOS',
+                  height: AppConstants.primaryButtonHeight,
+                  icon: Icons.stop_circle_outlined,
+                  onTap: _handleStopSOS,
+                ),
+          ),
+        ],
+      );
+    }
+    
+    // Default layout for non-active SOS states
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -462,112 +806,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
                     ),
                   ],
                 ),
-              ] else if (_isSOSActive) ...[
-                // Active SOS State
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Emergency SOS Active',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.accentRed,
-                        letterSpacing: -0.01,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Location Display
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: AppTheme.accentRed,
-                            size: 24,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _activeLocation ?? 'Emergency Location',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.primaryBlack,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'People in your district have been notified.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.neutralGrey,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Stop SOS Button
-                    Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryBlack,
-                      ),
-                      child: InkWell(
-                        onTap: _isSendingSOS ? null : _handleStopSOS,
-                        child: Center(
-                          child: _isSendingSOS
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: AppTheme.pureWhite,
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Stopping...',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.pureWhite,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Text(
-                                'STOP SOS',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.pureWhite,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
+              ] else if (!_isSOSActive) ...[
                 // Inactive SOS State - Redesigned Button
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1051,26 +1290,6 @@ class _SosButton extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // === GLOSS HIGHLIGHT ===
-                Positioned(
-                  top: buttonDiameter * 0.08,
-                  left: buttonDiameter * 0.15,
-                  child: Container(
-                    width: buttonDiameter * 0.70,
-                    height: buttonDiameter * 0.35,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color.fromRGBO(255, 255, 255, 0.5),
-                          Color.fromRGBO(255, 255, 255, 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
 
                 // === TEXT ===
                 Center(

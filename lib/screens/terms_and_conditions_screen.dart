@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
@@ -48,13 +49,12 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
           body: Column(
             children: [
               // Page Title
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
                   'Terms & Conditions',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryBlack,
@@ -247,10 +247,9 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                     ),
                     const SizedBox(height: 32),
                     
-                    const Text(
+                    Text(
                       'Last Updated: 22/01/2026',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
+                      style: GoogleFonts.inter(
                         fontSize: 11,
                         color: AppTheme.neutralGrey,
                         fontStyle: FontStyle.italic,
@@ -278,8 +277,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
     return Text(
       text,
       textAlign: TextAlign.justify,
-      style: const TextStyle(
-        fontFamily: 'Inter',
+      style: GoogleFonts.inter(
         fontSize: 13,
         color: AppTheme.primaryBlack,
         height: 1.6,
@@ -294,8 +292,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontFamily: 'Inter',
+          style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: AppTheme.primaryBlack,
@@ -307,8 +304,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
           Text(
             description,
             textAlign: TextAlign.justify,
-            style: const TextStyle(
-              fontFamily: 'Inter',
+            style: GoogleFonts.inter(
               fontSize: 13,
               color: AppTheme.neutralGrey,
               height: 1.6,
@@ -324,8 +320,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
       padding: const EdgeInsets.only(top: 4),
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: 'Inter',
+        style: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppTheme.primaryBlack,
@@ -339,8 +334,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
     return Text(
       text,
       textAlign: TextAlign.justify,
-      style: const TextStyle(
-        fontFamily: 'Inter',
+      style: GoogleFonts.inter(
         fontSize: 13,
         color: AppTheme.neutralGrey,
         height: 1.6,
@@ -370,8 +364,7 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                 child: Text(
                   item,
                   textAlign: TextAlign.justify,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppTheme.neutralGrey,
                     height: 1.6,
