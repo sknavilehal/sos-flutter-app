@@ -4,8 +4,7 @@ import '../core/constants/app_constants.dart';
 import '../core/services/profile_service.dart';
 import 'profile_create_screen.dart';
 import '../widgets/rrt_screen_layout.dart';
-import '../widgets/rrt_primary_button.dart';
-import '../widgets/rrt_footer_badges.dart';
+import '../widgets/onboarding_flow_bottom_bar.dart';
 
 /// Terms and Conditions screen shown once on first app launch
 class TermsAndConditionsScreen extends StatefulWidget {
@@ -75,14 +74,14 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                       children: [
                     // Introduction
                     _buildIntroText(
-                      'By downloading, installing, or using the Rapid Response Team (RRT) mobile application ("App"), you agree to these Terms & Conditions ("Terms"). If you do not agree, please do not use the App.',
+                      'By downloading, installing, or using the ${AppConstants.brandFullName} (RRT) mobile application ("App"), you agree to these Terms & Conditions ("Terms"). If you do not agree, please do not use the App.',
                     ),
                     const SizedBox(height: 24),
                     
                     // Section 1: Description of Service
                     _buildSection(
                       '1. Description of Service',
-                      'Rapid Response Team (RRT) is a community-based emergency alert application that allows users to send SOS alerts to nearby users within the same district using location-based notifications.',
+                      '${AppConstants.brandFullName} (RRT) is a community-based emergency alert application that allows users to send SOS alerts to nearby users within the same district using location-based notifications.',
                     ),
                     _buildBulletList([
                       'Provides technology-only alerting',
@@ -268,29 +267,9 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
         ),
       ),
       // Accept Button (Fixed at bottom)
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        decoration: const BoxDecoration(
-          color: AppTheme.backgroundColor,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Accept Button
-            RrtPrimaryButton(
-              label: 'ACCEPT',
-              height: AppConstants.primaryButtonHeight,
-              onTap: _acceptTerms,
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Footer badges
-            const RrtFooterBadges(),
-            
-            const SizedBox(height: 10),
-          ],
-        ),
+      bottomNavigationBar: OnboardingFlowBottomBar(
+        label: 'ACCEPT',
+        onTap: _acceptTerms,
       ),
     );
   }
