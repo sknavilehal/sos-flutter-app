@@ -12,19 +12,44 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   
   ActiveAlertsNotifier() : super([]) {
     // Schedule async loading to avoid modifying state during construction
-    Future.microtask(() => _loadAlertsFromStorage());
+    Future.microtask(() async {
+      await _loadAlertsFromStorage();
+      // Add debug placeholder alert in debug mode for TTL testing
+      if (kDebugMode) {
+        _addDebugPlaceholderAlert();
+      }
+    });
     // Start automatic background cleanup timer (checks every 5 minutes)
     _startCleanupTimer();
   }
 
   static const String _alertsKey = 'active_alerts';
-  static const double _alertTTLHours = 1.5; // Alerts expire after 1.5 hours
-  static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
+  static const double _alertTTLHours = 1 / 60; // TESTING: 1 minute (normally 1.5 hours)
+  static const Duration _cleanupInterval = Duration(seconds: 10); // TESTING: Check every 10 seconds (normally 5 minutes)
+
+  /// Add a debug placeholder alert for testing TTL functionality
+  /// Only called in debug mode to test alert expiration
+  void _addDebugPlaceholderAlert() {
+    final debugAlert = {
+      'name': 'Debug Test User',
+      'mobile_number': '+1234567890',
+      'approx_loc': 'Sample Location, Debug City',
+      'exact_lat': 12.9716,
+      'exact_lng': 77.5946,
+      'message': 'This is a placeholder alert for debug mode testing. Should disappear in 1 minute.',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'sos_id': 'debug_placeholder_alert', // Unique ID for debug alert
+    };
+    
+    debugPrint('Adding debug placeholder alert with timestamp: ${debugAlert['timestamp']}');
+    state = [debugAlert, ...state];
+  }
 
   /// Start automatic background cleanup timer
   /// Periodically removes expired alerts without manual intervention
   void _startCleanupTimer() {
     _cleanupTimer = Timer.periodic(_cleanupInterval, (timer) {
+      debugPrint('Running cleanup timer check...');
       removeExpiredAlerts();
     });
   }
@@ -153,16 +178,27 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     final currentTime = DateTime.now().millisecondsSinceEpoch;
     final initialCount = state.length;
     
+    debugPrint('Checking ${state.length} alerts for expiration...');
+    debugPrint('TTL threshold: ${_alertTTLHours * 60} minutes');
+    
     state = state.where((alert) {
       final alertTimestamp = alert['timestamp'] as int? ?? 0;
       final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
-      return alertAge.inMinutes < (_alertTTLHours * 60);
+      final ageInMinutes = alertAge.inMinutes;
+      final ttlMinutes = _alertTTLHours * 60;
+      final isValid = ageInMinutes < ttlMinutes;
+      
+      debugPrint('Alert "${alert['name']}": age=${ageInMinutes}min, ttl=${ttlMinutes.toStringAsFixed(2)}min, valid=$isValid');
+      
+      return isValid;
     }).toList();
     
     // Only save if alerts were actually removed
     if (state.length != initialCount) {
       await _saveAlertsToStorage();
-      debugPrint('Removed ${initialCount - state.length} expired alert(s)');
+      debugPrint('✓ Removed ${initialCount - state.length} expired alert(s)');
+    } else {
+      debugPrint('No expired alerts to remove');
     }
   }
 
