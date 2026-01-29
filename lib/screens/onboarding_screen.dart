@@ -78,7 +78,7 @@ class OnboardingScreen extends StatelessWidget {
       bottomNavigationBar: OnboardingFlowBottomBar(
         label: 'GET STARTED',
         onTap: () {
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const TermsAndConditionsScreen()),
           );
