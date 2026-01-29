@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 
 class RrtLogo extends StatelessWidget {
@@ -69,8 +70,8 @@ class RrtWordmark extends StatelessWidget {
 
   const RrtWordmark({
     super.key,
-    this.title = 'Rapid',
-    this.subtitle = 'Response Team',
+    this.title = AppConstants.brandTitle,
+    this.subtitle = AppConstants.brandSubtitle,
     this.titleSize = 32,
     this.subtitleSize = 32,
     this.titleColor = AppTheme.primaryBlack,
@@ -107,6 +108,43 @@ class RrtWordmark extends StatelessWidget {
             color: subtitleColor,
             height: height,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class RrtHeaderBranding extends StatelessWidget {
+  final CrossAxisAlignment alignment;
+  final double titleSize;
+  final double subtitleSize;
+
+  const RrtHeaderBranding({
+    super.key,
+    this.alignment = CrossAxisAlignment.start,
+    this.titleSize = 32,
+    this.subtitleSize = 32,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: alignment,
+      children: [
+        Align(
+          alignment: alignment == CrossAxisAlignment.center
+              ? Alignment.center
+              : Alignment.centerLeft,
+          child: const RrtLogo(),
+        ),
+        const SizedBox(height: 8),
+        RrtWordmark(
+          titleSize: titleSize,
+          subtitleSize: subtitleSize,
+          crossAxisAlignment: alignment,
+          textAlign: alignment == CrossAxisAlignment.center
+              ? TextAlign.center
+              : TextAlign.left,
         ),
       ],
     );
