@@ -73,7 +73,7 @@ class NotificationService {
 
     await _localNotifications.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
+      // No tap handler - user is already in app, they can navigate manually
     );
   }
   
@@ -86,9 +86,10 @@ class NotificationService {
       });
       
       // Handle notification taps when app is in background but not terminated
-      // This fires when user taps a notification, bringing the app to foreground
+      // Just let the app open normally - lifecycle observer will refresh alerts
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        handleNotificationTap(message);
+        debugPrint('Notification tapped from background - app resuming');
+        // No action needed - lifecycle observer handles alert loading
       });
       
       // ✅ Handle messages when app is opened from terminated state
@@ -155,31 +156,6 @@ class NotificationService {
     } catch (e) {
       debugPrint('Local notification failed: $e');
     }
-  }
-  
-  // Handle local notification tap (for foreground notifications)
-  static void _onNotificationTapped(NotificationResponse response) {
-    // Navigate to alerts screen if navigator is available
-    if (_navigatorKey?.currentState != null) {
-      _navigatorKey!.currentState!.pushNamed('/alerts');
-    }
-  }
-
-  // Handle notification tap when app is opened from background or terminated state
-  static Future<void> handleNotificationTap(RemoteMessage message) async {
-    final data = message.data;
-    
-    // Small delay to ensure navigator is ready
-    await Future.delayed(const Duration(milliseconds: 100));
-    
-    // Check if this is an alerts-related notification
-    if (data['screen'] == 'alerts' || data['type'] == 'sos_alert') {
-      // Navigate to alerts screen if navigator is available
-      if (_navigatorKey?.currentState != null) {
-        _navigatorKey!.currentState!.pushNamed('/alerts');
-      }
-    }
-    
   }
 
   /// Process FCM message data and update app state accordingly
@@ -312,21 +288,26 @@ class NotificationService {
   }
 
   /// Handle messages when app is opened from terminated state
+  /// Just checks for sender filtering - no navigation or data processing
+  /// Provider constructor will load alerts from storage on app start
   static Future<void> handleTerminatedMessage() async {
     try {
       final message = await FirebaseMessaging.instance.getInitialMessage();
       if (message != null) {
+        debugPrint('App opened from terminated state via notification tap');
         // Check for sender filtering
         final messageSenderId = message.data['sender_id'];
         if (messageSenderId != null) {
           final currentUserId = await UserIdService.getUserId();
           
           if (messageSenderId == currentUserId) {
+            debugPrint('Filtered out self-sent notification');
             return;
           }
         }
         
-        await handleNotificationTap(message);
+        // No action needed - provider constructor will load alerts from storage
+        debugPrint('App starting normally - alerts will load from storage');
       }
     } catch (e) {
       debugPrint('Terminated message handling failed: $e');
