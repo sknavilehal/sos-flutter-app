@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -18,6 +19,15 @@ class NotificationService {
   static WidgetRef? _ref;
   static bool _initialized = false;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  static StreamSubscription<String>? _tokenRefreshSubscription;
+
+  static bool get _isApplePlatform {
+    if (kIsWeb) {
+      return false;
+    }
+    return defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+  }
 
   /// Initialize the notification service with navigation key and Riverpod ref
   /// Called from main.dart to set up navigation and state management access
@@ -38,6 +48,7 @@ class NotificationService {
   static Future<void> _requestFCMPermissions() async {
     try {
       final messaging = FirebaseMessaging.instance;
+      await messaging.setAutoInitEnabled(true);
       
       // Request permission for iOS and Android 13+
       final settings = await messaging.requestPermission(
@@ -47,14 +58,39 @@ class NotificationService {
         provisional: false,
       );
       
+      if (_isApplePlatform) {
+        await messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+      
       debugPrint('FCM Permission status: ${settings.authorizationStatus}');
+
+      _listenForTokenRefresh(messaging);
       
       // Get and log FCM token for debugging
       final token = await messaging.getToken();
       debugPrint('FCM Token: $token');
+
+      if (_isApplePlatform) {
+        final apnsToken = await messaging.getAPNSToken();
+        debugPrint('APNs Token: $apnsToken');
+      }
     } catch (e) {
       debugPrint('FCM permission request failed: $e');
     }
+  }
+
+  static void _listenForTokenRefresh(FirebaseMessaging messaging) {
+    if (_tokenRefreshSubscription != null) {
+      return;
+    }
+
+    _tokenRefreshSubscription = messaging.onTokenRefresh.listen((token) {
+      debugPrint('FCM Token refreshed: $token');
+    });
   }
   
   /// Initialize local notifications
@@ -115,8 +151,16 @@ class NotificationService {
     // Process the message data first
     await handleForegroundMessage(message);
     
-    // Show local notification
-    await _showLocalNotification(message);
+    if (_shouldShowLocalNotification(message)) {
+      await _showLocalNotification(message);
+    }
+  }
+
+  static bool _shouldShowLocalNotification(RemoteMessage message) {
+    if (_isApplePlatform && message.notification != null) {
+      return false;
+    }
+    return true;
   }
   
   /// Show local notification for foreground messages
