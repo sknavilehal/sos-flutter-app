@@ -24,8 +24,8 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   }
 
   static const String _alertsKey = 'active_alerts';
-  static const double _alertTTLHours = 1 / 60; // TESTING: 1 minute (normally 1.5 hours)
-  static const Duration _cleanupInterval = Duration(seconds: 10); // TESTING: Check every 10 seconds (normally 5 minutes)
+  static const double _alertTTLHours = 1.5; // 1.5 hours
+  static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
 
   /// Add a debug placeholder alert for testing TTL functionality
   /// Only called in debug mode to test alert expiration
@@ -41,7 +41,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       'sos_id': 'debug_placeholder_alert', // Unique ID for debug alert
     };
     
-    debugPrint('Adding debug placeholder alert with timestamp: ${debugAlert['timestamp']}');
     state = [debugAlert, ...state];
   }
 
@@ -49,7 +48,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   /// Periodically removes expired alerts without manual intervention
   void _startCleanupTimer() {
     _cleanupTimer = Timer.periodic(_cleanupInterval, (timer) {
-      debugPrint('Running cleanup timer check...');
       removeExpiredAlerts();
     });
   }
@@ -178,9 +176,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     final currentTime = DateTime.now().millisecondsSinceEpoch;
     final initialCount = state.length;
     
-    debugPrint('Checking ${state.length} alerts for expiration...');
-    debugPrint('TTL threshold: ${_alertTTLHours * 60} minutes');
-    
     state = state.where((alert) {
       final alertTimestamp = alert['timestamp'] as int? ?? 0;
       final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
@@ -188,17 +183,12 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       final ttlMinutes = _alertTTLHours * 60;
       final isValid = ageInMinutes < ttlMinutes;
       
-      debugPrint('Alert "${alert['name']}": age=${ageInMinutes}min, ttl=${ttlMinutes.toStringAsFixed(2)}min, valid=$isValid');
-      
       return isValid;
     }).toList();
     
     // Only save if alerts were actually removed
     if (state.length != initialCount) {
       await _saveAlertsToStorage();
-      debugPrint('✓ Removed ${initialCount - state.length} expired alert(s)');
-    } else {
-      debugPrint('No expired alerts to remove');
     }
   }
 
