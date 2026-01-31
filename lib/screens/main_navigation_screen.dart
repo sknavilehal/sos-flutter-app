@@ -41,8 +41,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> wit
     // When app returns to foreground (resumed), reload alerts from storage
     // This ensures alerts added while app was in background are displayed
     if (state == AppLifecycleState.resumed) {
-      debugPrint('App resumed - refreshing alerts from storage (MainNavigationScreen)');
-      ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+      // Use Future.microtask to ensure the refresh happens after the current frame
+      Future.microtask(() async {
+        try {
+          await ref.read(activeAlertsProvider.notifier).refreshFromStorage();
+        } catch (e) {
+          debugPrint('Error refreshing alerts from storage: $e');
+        }
+      });
     }
   }
   

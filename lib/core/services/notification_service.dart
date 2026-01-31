@@ -86,10 +86,14 @@ class NotificationService {
       });
       
       // Handle notification taps when app is in background but not terminated
-      // Just let the app open normally - lifecycle observer will refresh alerts
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('Notification tapped from background - app resuming');
-        // No action needed - lifecycle observer handles alert loading
+      // On iOS, this is often our ONLY chance to process the message
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+        // iOS often doesn't run background handler, so process the message here
+        await _handleMessageData(message.data);
+        // Also refresh from storage in case background handler DID run
+        if (_ref != null) {
+          _ref!.read(activeAlertsProvider.notifier).refreshFromStorage();
+        }
       });
       
       // ✅ Handle messages when app is opened from terminated state
@@ -293,20 +297,18 @@ class NotificationService {
     try {
       final message = await FirebaseMessaging.instance.getInitialMessage();
       if (message != null) {
-        debugPrint('App opened from terminated state via notification tap');
         // Check for sender filtering
         final messageSenderId = message.data['sender_id'];
         if (messageSenderId != null) {
           final currentUserId = await UserIdService.getUserId();
           
           if (messageSenderId == currentUserId) {
-            debugPrint('Filtered out self-sent notification');
             return;
           }
         }
         
-        // No action needed - provider constructor will load alerts from storage
-        debugPrint('App starting normally - alerts will load from storage');
+        // iOS workaround: Process message data here since background handler may not have run
+        await _handleMessageData(message.data);
       }
     } catch (e) {
       debugPrint('Terminated message handling failed: $e');

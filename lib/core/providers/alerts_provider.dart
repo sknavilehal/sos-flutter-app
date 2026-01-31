@@ -43,6 +43,11 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   Future<void> _loadAlertsFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // CRITICAL: Reload from disk to get updates from background isolate
+      // Background handler writes in separate isolate, main app cache may be stale
+      await prefs.reload();
+      
       final alertsJson = prefs.getStringList(_alertsKey) ?? [];
       
       final currentTime = DateTime.now().millisecondsSinceEpoch;
