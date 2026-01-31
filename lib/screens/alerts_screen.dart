@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,34 +16,7 @@ class AlertsScreen extends ConsumerStatefulWidget {
   ConsumerState<AlertsScreen> createState() => _AlertsScreenState();
 }
 
-class _AlertsScreenState extends ConsumerState<AlertsScreen> with WidgetsBindingObserver {
-  
-  @override
-  void initState() {
-    super.initState();
-    // Register lifecycle observer to detect when app returns to foreground
-    WidgetsBinding.instance.addObserver(this);
-  }
-  
-  @override
-  void dispose() {
-    // Unregister lifecycle observer
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-  
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    
-    // When app returns to foreground (resumed), reload alerts from storage
-    // This ensures alerts added while app was in background are displayed
-    if (state == AppLifecycleState.resumed) {
-      debugPrint('App resumed - refreshing alerts from storage');
-      ref.read(activeAlertsProvider.notifier).refreshFromStorage();
-    }
-  }
-  
+class _AlertsScreenState extends ConsumerState<AlertsScreen> {
   /// Get user's current position for distance calculations
   /// Returns Position object or null if unavailable
   Future<Position?> _getUserPosition(dynamic locationService) async {
@@ -140,21 +112,58 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> with WidgetsBinding
     // Format distance display
     final distanceText = distance != null ? '${distance}km away' : 'Distance unknown';
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(0),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    final sosId = alert['sos_id'] as String? ?? '';
+    
+    return Dismissible(
+      key: Key(sosId),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        _removeAlert(sosId, alert);
+      },
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: AppTheme.accentRed,
+          borderRadius: BorderRadius.circular(0),
+          border: Border.all(color: Colors.grey.shade200, width: 1),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Icon(
+              Icons.delete_outline,
+              color: Colors.white,
+              size: 28,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'REMOVE',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(0),
+          border: Border.all(color: Colors.grey.shade200, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,7 +321,14 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> with WidgetsBinding
           ),
         ],
       ),
+      ),
     );
+  }
+
+  /// Remove an alert
+  void _removeAlert(String sosId, Map<String, dynamic> alert) {
+    // Remove the alert
+    ref.read(activeAlertsProvider.notifier).removeAlert(sosId);
   }
 
   /// Format duration into human-readable "time ago" string
