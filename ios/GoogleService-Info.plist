@@ -3,28 +3,28 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCAZqw-a8JvYyW4MTPhJ6_sVZJx25aAhkQ</string>
+	<string>AIzaSyCQCpaJIdNejPZmj6uFrcoMdu677O5JXoo</string>
 	<key>GCM_SENDER_ID</key>
-	<string>484757895312</string>
+	<string>502715957062</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.rrt.sos</string>
 	<key>PROJECT_ID</key>
-	<string>rapid-response-team-app</string>
+	<string>rrt-sos</string>
 	<key>STORAGE_BUCKET</key>
-	<string>rapid-response-team-app.firebasestorage.app</string>
+	<string>rrt-sos.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
-	<false/>
+	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false/>
+	<false></false>
 	<key>IS_APPINVITE_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>IS_GCM_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>IS_SIGNIN_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:484757895312:ios:37c6d099ced33f34bc0015</string>
+	<string>1:502715957062:ios:11e91788a60cb3a0222f47</string>
 </dict>
 </plist>
