@@ -79,72 +79,65 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> wit
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Main content area with shared header and tab-specific body
-            Expanded(
-              child: RrtScreenContent(
-                showHeader: true,
-                headerAlignment: CrossAxisAlignment.start,
-                useScrollView: false, // Each screen manages its own scroll behavior
-                body: IndexedStack(
-                  index: _currentIndex,
-                  children: _screens,
-                ),
-                footer: _getFooterForCurrentTab(),
-              ),
+        bottom: false, // Don't apply safe area to bottom - let nav bar handle it
+        child: RrtScreenContent(
+          showHeader: true,
+          headerAlignment: CrossAxisAlignment.start,
+          useScrollView: false, // Each screen manages its own scroll behavior
+          body: IndexedStack(
+            index: _currentIndex,
+            children: _screens,
+          ),
+          footer: _getFooterForCurrentTab(),
+        ),
+      ),
+      // Use Scaffold's bottomNavigationBar property for proper positioning
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.grey, width: 0.5),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: AppTheme.textSecondary,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          iconSize: 22,
+          selectedLabelStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.5,
+          ),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'HOME',
             ),
-            
-            // Bottom Navigation Bar
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.white,
-                selectedItemColor: Colors.black,
-                unselectedItemColor: AppTheme.textSecondary,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                iconSize: 22,
-                selectedLabelStyle: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.5,
-                ),
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: 'HOME',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.notifications),
-                    label: 'ALERTS',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: 'PROFILE',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.support),
-                    label: 'HELP',
-                  ),
-                ],
-              ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'ALERTS',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'PROFILE',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.support),
+              label: 'HELP',
             ),
           ],
         ),
