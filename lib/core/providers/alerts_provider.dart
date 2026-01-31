@@ -14,10 +14,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     // Schedule async loading to avoid modifying state during construction
     Future.microtask(() async {
       await _loadAlertsFromStorage();
-      // Add debug placeholder alert in debug mode for TTL testing
-      if (kDebugMode) {
-        _addDebugPlaceholderAlert();
-      }
     });
     // Start automatic background cleanup timer (checks every 5 minutes)
     _startCleanupTimer();
@@ -26,23 +22,6 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   static const String _alertsKey = 'active_alerts';
   static const double _alertTTLHours = 1.5; // 1.5 hours
   static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
-
-  /// Add a debug placeholder alert for testing TTL functionality
-  /// Only called in debug mode to test alert expiration
-  void _addDebugPlaceholderAlert() {
-    final debugAlert = {
-      'name': 'Debug Test User',
-      'mobile_number': '+1234567890',
-      'approx_loc': 'Sample Location, Debug City',
-      'exact_lat': 12.9716,
-      'exact_lng': 77.5946,
-      'message': 'This is a placeholder alert for debug mode testing. Should disappear in 1 minute.',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'sos_id': 'debug_placeholder_alert', // Unique ID for debug alert
-    };
-    
-    state = [debugAlert, ...state];
-  }
 
   /// Start automatic background cleanup timer
   /// Periodically removes expired alerts without manual intervention
