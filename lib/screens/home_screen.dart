@@ -65,10 +65,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
     Future.microtask(() async {
       // DEBUG MODE: Set arbitrary district for testing on emulator
       if (kDebugMode) {
-        debugPrint('DEBUG MODE: Setting test district for emulator');
-        if (mounted) {
+        const testDistrict = 'udupi'; // Change this to any district you want to test
+        
+        // Subscribe to the test district topic
+        final subscribed = await _districtService.subscribeToDistrict(testDistrict);
+        
+        if (subscribed && mounted) {
           setState(() {
-            _currentDistrict = 'udupi'; // Change this to any district you want to test
+            _currentDistrict = testDistrict;
           });
         }
         return;

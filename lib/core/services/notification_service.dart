@@ -107,8 +107,7 @@ class NotificationService {
       final currentUserId = await UserIdService.getUserId();
       
       if (messageSenderId == currentUserId) {
-        // Process the message data first
-
+        // Filter out self-sent notifications
         return;
       }
     }
