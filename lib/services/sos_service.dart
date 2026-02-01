@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,9 +17,6 @@ abstract class SOSService {
     required Position location,
     Map<String, dynamic>? userInfo,
   });
-  
-  /// Test backend connectivity
-  Future<bool> testConnection();
 }
 
 /// HTTP-based implementation for communicating with backend
@@ -71,47 +70,50 @@ class HTTPSOSService implements SOSService {
         );
       } else {
         debugPrint('SOS request failed: ${response.statusCode}');
-        final errorData = json.decode(response.body);
+        String errorMessage = 'Unexpected response from server.';
+        try {
+          final errorData = json.decode(response.body);
+          if (errorData is Map && errorData['error'] != null) {
+            errorMessage = errorData['error'].toString();
+          }
+        } catch (_) {
+          // Keep default error message for non-JSON responses.
+        }
         return SOSResponse.error(
-          error: errorData['error'] ?? 'Unknown error',
+          error: errorMessage,
           statusCode: response.statusCode,
         );
       }
-    } catch (e) {
-      debugPrint('SOS request failed: $e');
-      String errorMessage = 'Failed to send SOS alert';
-      if (e.toString().contains('TimeoutException')) {
-        errorMessage = 'Request timeout. Please check your connection and backend server.';
-      } else if (e.toString().contains('SocketException')) {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else if (e.toString().contains('FormatException')) {
-        errorMessage = 'Invalid response from server.';
-      }
-      
+    } on TimeoutException catch (e) {
+      debugPrint('SOS request timed out: $e');
       return SOSResponse.error(
-        error: errorMessage,
+        error: 'Request timed out. The backend may be unavailable. Please try again.',
         originalError: e.toString(),
       );
-    }
-  }
-
-  @override
-  Future<bool> testConnection() async {
-    try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.healthEndpoint),
-        headers: {'Accept': 'application/json'},
-      ).timeout(Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['status'] == 'ok';
-      }
-      
-      return false;
+    } on SocketException catch (e) {
+      debugPrint('SOS request failed with socket error: $e');
+      return SOSResponse.error(
+        error: 'Unable to reach the backend server. Please check your connection and try again.',
+        originalError: e.toString(),
+      );
+    } on http.ClientException catch (e) {
+      debugPrint('SOS request failed with client error: $e');
+      return SOSResponse.error(
+        error: 'Unable to reach the backend server. Please try again.',
+        originalError: e.toString(),
+      );
+    } on FormatException catch (e) {
+      debugPrint('SOS request failed with format error: $e');
+      return SOSResponse.error(
+        error: 'Invalid response from server.',
+        originalError: e.toString(),
+      );
     } catch (e) {
-      debugPrint('Backend health check failed: $e');
-      return false;
+      debugPrint('SOS request failed: $e');
+      return SOSResponse.error(
+        error: 'Failed to send SOS alert. Please try again.',
+        originalError: e.toString(),
+      );
     }
   }
 }

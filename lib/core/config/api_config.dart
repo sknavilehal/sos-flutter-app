@@ -19,5 +19,4 @@ class ApiConfig {
   }
   
   static String get sosEndpoint => '$baseUrl/sos';
-  static String get healthEndpoint => '$baseUrl/health';
 }
