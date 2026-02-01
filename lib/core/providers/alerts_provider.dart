@@ -136,6 +136,12 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     await _saveAlertsToStorage();
   }
 
+  /// Clear all alerts (debug-only action in UI)
+  Future<void> clearAllAlerts() async {
+    state = [];
+    await _saveAlertsToStorage();
+  }
+
   /// Force reload alerts from SharedPreferences
   /// Useful when alerts are added from background/external processes
   Future<void> refreshFromStorage() async {

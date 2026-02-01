@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
@@ -82,12 +83,19 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
       builder: (context, positionSnapshot) {
         final userPosition = positionSnapshot.data;
         
+        final showDebugClearButton = kDebugMode;
+        final itemCount = alerts.length + (showDebugClearButton ? 1 : 0);
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenMargins),
-          itemCount: alerts.length,
+          itemCount: itemCount,
           itemBuilder: (context, index) {
-            // Real alerts
-            final alert = alerts[index];
+            if (showDebugClearButton && index == 0) {
+              return _buildDebugClearButton(hasAlerts: alerts.isNotEmpty);
+            }
+
+            final alertIndex = showDebugClearButton ? index - 1 : index;
+            final alert = alerts[alertIndex];
             
             // Calculate distance for this alert
             final distance = _calculateDistance(
@@ -103,6 +111,27 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
     );
   }
 
+  Widget _buildDebugClearButton({required bool hasAlerts}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: OutlinedButton.icon(
+        onPressed: hasAlerts ? _clearAllAlerts : null,
+        icon: const Icon(Icons.delete_forever_outlined),
+        label: const Text('Clear All Alerts (Debug)'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.accentRed,
+          side: const BorderSide(color: AppTheme.accentRed),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          textStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.05,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAlertCard(Map<String, dynamic> alert, double? distance) {
     // Calculate time ago from timestamp
     final timestamp = alert['timestamp'] as int? ?? 0;
@@ -112,58 +141,21 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
     // Format distance display
     final distanceText = distance != null ? '${distance}km away' : 'Distance unknown';
     
-    final sosId = alert['sos_id'] as String? ?? '';
-    
-    return Dismissible(
-      key: Key(sosId),
-      direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        _removeAlert(sosId, alert);
-      },
-      background: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppTheme.accentRed,
-          borderRadius: BorderRadius.circular(0),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(
-              Icons.delete_outline,
-              color: Colors.white,
-              size: 28,
-            ),
-            SizedBox(width: 8),
-            Text(
-              'REMOVE',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(0),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(0),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -321,14 +313,11 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
           ),
         ],
       ),
-      ),
     );
   }
 
-  /// Remove an alert
-  void _removeAlert(String sosId, Map<String, dynamic> alert) {
-    // Remove the alert
-    ref.read(activeAlertsProvider.notifier).removeAlert(sosId);
+  Future<void> _clearAllAlerts() async {
+    await ref.read(activeAlertsProvider.notifier).clearAllAlerts();
   }
 
   /// Format duration into human-readable "time ago" string
