@@ -104,7 +104,9 @@ class OfflineDistrictService {
     }
 
     final lookupTime = DateTime.now().difference(startTime).inMilliseconds;
-    debugPrint('❌ No district found for ($latitude, $longitude) - checked in ${lookupTime}ms');
+    if (kDebugMode) {
+      debugPrint('❌ No district found for ($latitude, $longitude) - checked in ${lookupTime}ms');
+    }
     return null;
   }
 
