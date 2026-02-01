@@ -41,6 +41,16 @@ Flutter maps this to:
 6. **Verify listing**
    - Confirm the store listing shows the new version.
 
+## Platform-Specific Guides
+
+### Android
+For detailed Android publishing steps, see:
+- **[Android Publishing Guide](ANDROID_PUBLISHING.md)** - Complete step-by-step guide
+- **[Android Publishing Checklist](ANDROID_PUBLISHING_CHECKLIST.md)** - Pre-release checklist
+
+### iOS
+iOS publishing guide coming soon.
+
 ## Optional: override version at build time
 If needed, you can override during build:
 ```
