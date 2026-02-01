@@ -68,5 +68,31 @@ lib/
 - **Debug**: Use real device for location/notifications
 - **Firebase**: App gracefully handles missing config
 
+## Publishing
+
+### Android
+
+See [Android Publishing Guide](docs/ANDROID_PUBLISHING.md) for complete steps to publish to Google Play Store.
+
+Quick commands:
+```bash
+# Build release app bundle
+flutter build appbundle --release
+
+# Build release APK
+flutter build apk --release
+```
+
+### Version Management
+
+See [RELEASING.md](docs/RELEASING.md) for version management guidelines.
+
 ---
-See main README.md for complete setup guide
+
+## Documentation
+
+- [Android Publishing Guide](docs/ANDROID_PUBLISHING.md) - Complete Play Store publishing steps
+- [Android Publishing Checklist](docs/ANDROID_PUBLISHING_CHECKLIST.md) - Pre-release checklist
+- [Releasing Guide](docs/RELEASING.md) - Version management
+- [Smoke Test Checklist](docs/SMOKE_TEST_CHECKLIST.md) - Testing checklist
+- [Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md) - Architecture overview
