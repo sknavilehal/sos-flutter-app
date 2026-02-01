@@ -41,15 +41,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   final _districtService = DistrictSubscriptionService();
   
   // Cache futures to prevent rebuilding
-  Future<bool>? _serverConnectionFuture;
   Future<bool>? _locationPermissionFuture;
   Future<String?>? _locationAddressFuture;
-  
-  // Server health check caching
-  static DateTime? _lastServerCheckTime;
-  static bool? _lastServerCheckResult;
-  static const _serverCheckInterval = Duration(minutes: 5);
-  Timer? _serverHealthTimer;
   
   @override
   void initState() {
@@ -57,7 +50,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
     _loadSOSState();
     _initializeFutures();
     _checkAndInitializeDistrictSubscription(); // Only if permission exists
-    _startPeriodicServerHealthCheck();
   }
   
   /// Check if we have permission, then initialize district subscription
@@ -98,58 +90,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   
   /// Initialize cached futures to prevent rebuilds
   void _initializeFutures() {
-    // Use cached server status if available and recent
-    if (_lastServerCheckResult != null && 
-        _lastServerCheckTime != null && 
-        DateTime.now().difference(_lastServerCheckTime!) < _serverCheckInterval) {
-      // Use cached result
-      _serverConnectionFuture = Future.value(_lastServerCheckResult);
-    } else {
-      // Perform new check
-      _serverConnectionFuture = _checkServerConnection();
-    }
-    
     final locationService = ref.read(locationServiceProvider);
     _locationPermissionFuture = locationService.hasLocationPermission();
-  }
-  
-  /// Check server connection and cache the result
-  Future<bool> _checkServerConnection() async {
-    try {
-      final result = await ref.read(sosServiceProvider).testConnection();
-      _lastServerCheckResult = result;
-      _lastServerCheckTime = DateTime.now();
-      return result;
-    } catch (e) {
-      debugPrint('Server connection check failed: $e');
-      _lastServerCheckResult = false;
-      _lastServerCheckTime = DateTime.now();
-      return false;
-    }
-  }
-  
-  /// Start periodic server health check every 5 minutes
-  void _startPeriodicServerHealthCheck() {
-    _serverHealthTimer = Timer.periodic(_serverCheckInterval, (timer) {
-      if (mounted) {
-        _checkServerConnection().then((result) {
-          if (mounted) {
-            setState(() {
-              _serverConnectionFuture = Future.value(result);
-            });
-          }
-        });
-      }
-    });
   }
   
   /// Refresh cached futures when needed
   void _refreshFutures() {
     setState(() {
       _locationAddressFuture = null; // Clear address cache to refresh location
-      // Force new server check by clearing cache
-      _lastServerCheckResult = null;
-      _lastServerCheckTime = null;
       _initializeFutures();
     });
   }
@@ -185,7 +133,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   void dispose() {
     _messageController.dispose();
     _holdTimer?.cancel();
-    _serverHealthTimer?.cancel();
     super.dispose();
   }
 
@@ -257,70 +204,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Backend Status
-                    Consumer(
-                      builder: (context, ref, child) {
-                        return FutureBuilder<bool>(
-                          future: _serverConnectionFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Row(
-                                children: [
-                                  SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(strokeWidth: 1.5),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text('Checking server...', style: TextStyle(fontSize: 12, color: AppTheme.neutralGrey)),
-                                ],
-                              );
-                            }
-                            
-                            final isConnected = snapshot.data ?? false;
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 2),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: isConnected ? Colors.green : AppTheme.accentRed,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isConnected ? 'SERVER CONNECTED' : 'SERVER OFFLINE',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'JetBrainsMono',
-                                      color: isConnected ? Colors.green : AppTheme.accentRed,
-                                    ),
-                                  ),
-                                  if (!isConnected) ...[
-                                    const Spacer(),
-                                    TextButton(
-                                      onPressed: _refreshFutures,
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text('Retry', style: TextStyle(fontSize: 12)),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
                     // Location Status
                     Consumer(
                       builder: (context, ref, child) {
@@ -582,70 +465,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-              // Backend Status
-              Consumer(
-                builder: (context, ref, child) {
-                  return FutureBuilder<bool>(
-                    future: _serverConnectionFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Row(
-                          children: [
-                            SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 1.5),
-                            ),
-                            SizedBox(width: 8),
-                            Text('Checking server...', style: TextStyle(fontSize: 12, color: AppTheme.neutralGrey)),
-                          ],
-                        );
-                      }
-                      
-                      final isConnected = snapshot.data ?? false;
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 2),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isConnected ? Colors.green : AppTheme.accentRed,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isConnected ? 'SERVER CONNECTED' : 'SERVER OFFLINE',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'JetBrainsMono',
-                                color: isConnected ? Colors.green : AppTheme.accentRed,
-                              ),
-                            ),
-                            if (!isConnected) ...[
-                              const Spacer(),
-                              TextButton(
-                                onPressed: _refreshFutures, // Refresh server connection
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text('Retry', style: TextStyle(fontSize: 12)),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 24),
-              
               // Location Status
               Consumer(
                 builder: (context, ref, child) {
