@@ -10,9 +10,6 @@
     <!-- Notification Permissions (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
-    <!-- Phone Permission for emergency calls -->
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    
     <application
         android:label="RRT"
         android:name="${applicationName}"

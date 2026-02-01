@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -49,7 +50,9 @@ class NotificationService {
       
       // Get and log FCM token for debugging
       final token = await messaging.getToken();
-      debugPrint('FCM Token: $token');
+      if (kDebugMode) {
+        debugPrint('FCM Token: $token');
+      }
     } catch (e) {
       debugPrint('FCM permission request failed: $e');
     }
