@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/profile_service.dart';
+import '../constants/app_constants.dart';
 
 /// State notifier for managing active SOS alerts
 /// This provider manages the list of active emergency alerts received via FCM
@@ -20,7 +21,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   }
 
   static const String _alertsKey = 'active_alerts';
-  static const double _alertTTLHours = 1.5; // 1.5 hours
+  static const Duration _alertTtl = AppConstants.alertTtl;
   static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
 
   /// Start automatic background cleanup timer
@@ -72,7 +73,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
           // Check if alert is within TTL (Time To Live)
           final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
           
-          if (alertAge.inMinutes < (_alertTTLHours * 60)) {
+          if (alertAge < _alertTtl) {
             validAlerts.add(alert);
           }
         } catch (e) {
@@ -169,9 +170,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     state = state.where((alert) {
       final alertTimestamp = alert['timestamp'] as int? ?? 0;
       final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
-      final ageInMinutes = alertAge.inMinutes;
-      final ttlMinutes = _alertTTLHours * 60;
-      final isValid = ageInMinutes < ttlMinutes;
+      final isValid = alertAge < _alertTtl;
       
       return isValid;
     }).toList();

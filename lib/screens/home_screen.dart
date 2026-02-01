@@ -21,17 +21,25 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAliveClientMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   @override
   bool get wantKeepAlive => true; // Keep state alive when switching tabs
+  
+  static const String _sosActiveKey = 'sos_active';
+  static const String _activeSosIdKey = 'active_sos_id';
+  static const String _activeLocationKey = 'active_location';
+  static const String _activeSosTimestampKey = 'active_sos_timestamp';
   
   bool _isSendingSOS = false;
   bool _isSOSActive = false;
   String? _activeSosId;
   String? _activeLocation;
+  int? _activeSosTimestamp;
   final TextEditingController _messageController = TextEditingController();
   bool _isStateLoaded = false;
   String? _currentDistrict; // Cached district name
+  Timer? _sosExpiryTimer;
   
   // Hold to send SOS functionality
   double _holdProgress = 0.0; // 0.0 to 1.0
@@ -47,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSOSState();
     _initializeFutures();
     _checkAndInitializeDistrictSubscription(); // Only if permission exists
@@ -131,27 +140,132 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _holdTimer?.cancel();
+    _sosExpiryTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndHandleSosExpiration();
+    }
+  }
+
+  void _scheduleSosExpiry(int activatedAtMillis) {
+    _sosExpiryTimer?.cancel();
+    final expiresAt = DateTime.fromMillisecondsSinceEpoch(activatedAtMillis)
+        .add(AppConstants.alertTtl);
+    final remaining = expiresAt.difference(DateTime.now());
+
+    if (remaining.isNegative || remaining == Duration.zero) {
+      _expireActiveSos();
+      return;
+    }
+
+    _sosExpiryTimer = Timer(remaining, () {
+      _expireActiveSos();
+    });
+  }
+
+  Future<void> _checkAndHandleSosExpiration() async {
+    if (!_isSOSActive) {
+      _sosExpiryTimer?.cancel();
+      return;
+    }
+
+    final nowMillis = DateTime.now().millisecondsSinceEpoch;
+    final activatedAt = _activeSosTimestamp ?? nowMillis;
+    final age = Duration(milliseconds: nowMillis - activatedAt);
+
+    if (age >= AppConstants.alertTtl) {
+      await _expireActiveSos();
+      return;
+    }
+
+    if (_activeSosTimestamp == null) {
+      _activeSosTimestamp = activatedAt;
+      await _saveSOSState();
+    }
+
+    _scheduleSosExpiry(activatedAt);
+  }
+
+  Future<void> _expireActiveSos({bool markLoaded = false}) async {
+    _sosExpiryTimer?.cancel();
+    _sosExpiryTimer = null;
+
+    if (mounted) {
+      setState(() {
+        _isSOSActive = false;
+        _activeSosId = null;
+        _activeLocation = null;
+        _activeSosTimestamp = null;
+        if (markLoaded) {
+          _isStateLoaded = true;
+        }
+      });
+    } else {
+      _isSOSActive = false;
+      _activeSosId = null;
+      _activeLocation = null;
+      _activeSosTimestamp = null;
+      if (markLoaded) {
+        _isStateLoaded = true;
+      }
+    }
+
+    await _saveSOSState();
   }
 
   /// Load SOS state from SharedPreferences
   Future<void> _loadSOSState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isActive = prefs.getBool('sos_active') ?? false;
-      final sosId = prefs.getString('active_sos_id');
-      final location = prefs.getString('active_location');
-      
+      final isActive = prefs.getBool(_sosActiveKey) ?? false;
+      final sosId = prefs.getString(_activeSosIdKey);
+      final location = prefs.getString(_activeLocationKey);
+      final storedTimestamp = prefs.getInt(_activeSosTimestampKey);
+      final nowMillis = DateTime.now().millisecondsSinceEpoch;
+
+      int? effectiveTimestamp = storedTimestamp;
+      if (isActive) {
+        effectiveTimestamp ??= nowMillis;
+        final age = Duration(milliseconds: nowMillis - effectiveTimestamp);
+        if (age >= AppConstants.alertTtl) {
+          await _expireActiveSos(markLoaded: true);
+          return;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _isSOSActive = isActive;
-          _activeSosId = sosId;
-          _activeLocation = location;
+          _activeSosId = isActive ? sosId : null;
+          _activeLocation = isActive ? location : null;
+          _activeSosTimestamp = isActive ? effectiveTimestamp : null;
           _isStateLoaded = true;
         });
-        
+      } else {
+        _isSOSActive = isActive;
+        _activeSosId = isActive ? sosId : null;
+        _activeLocation = isActive ? location : null;
+        _activeSosTimestamp = isActive ? effectiveTimestamp : null;
+        _isStateLoaded = true;
+      }
+
+      if (isActive && effectiveTimestamp != null) {
+        _scheduleSosExpiry(effectiveTimestamp);
+      } else {
+        _sosExpiryTimer?.cancel();
+      }
+
+      if (isActive && storedTimestamp == null) {
+        await _saveSOSState();
+      } else if (!isActive && (sosId != null || location != null || storedTimestamp != null)) {
+        await _saveSOSState();
       }
     } catch (e) {
       debugPrint('SOS state load failed: $e');
@@ -167,16 +281,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
   Future<void> _saveSOSState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('sos_active', _isSOSActive);
+      await prefs.setBool(_sosActiveKey, _isSOSActive);
       if (_activeSosId != null) {
-        await prefs.setString('active_sos_id', _activeSosId!);
+        await prefs.setString(_activeSosIdKey, _activeSosId!);
       } else {
-        await prefs.remove('active_sos_id');
+        await prefs.remove(_activeSosIdKey);
       }
       if (_activeLocation != null) {
-        await prefs.setString('active_location', _activeLocation!);
+        await prefs.setString(_activeLocationKey, _activeLocation!);
       } else {
-        await prefs.remove('active_location');
+        await prefs.remove(_activeLocationKey);
+      }
+      if (_activeSosTimestamp != null) {
+        await prefs.setInt(_activeSosTimestampKey, _activeSosTimestamp!);
+      } else {
+        await prefs.remove(_activeSosTimestampKey);
       }
     } catch (e) {
       debugPrint('SOS state save failed: $e');
@@ -840,10 +959,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
 
       if (response.success) {
         if (!mounted) return;
+        final activatedAt = DateTime.now().millisecondsSinceEpoch;
         // Activate SOS state
         setState(() {
           _isSOSActive = true;
           _activeSosId = sosId;
+          _activeSosTimestamp = activatedAt;
         });
         
         // Get current address for display
@@ -856,6 +977,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
         // Save state to persistence
         await _saveSOSState();
         if (!mounted) return;
+        _scheduleSosExpiry(activatedAt);
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -981,16 +1103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
       );
 
       if (response.success) {
-        if (!mounted) return;
-        // Deactivate SOS state
-        setState(() {
-          _isSOSActive = false;
-          _activeSosId = null;
-          _activeLocation = null;
-        });
-        
-        // Clear saved state
-        await _saveSOSState();
+        await _expireActiveSos();
         if (!mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
