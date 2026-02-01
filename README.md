@@ -2,6 +2,33 @@
 
 Cross-platform mobile application for emergency SOS alerts with location-based routing.
 
+---
+
+## ⚠️ **IMPORTANT: App Store Compliance Status**
+
+**🔴 HIGH REJECTION RISK - DO NOT SUBMIT TO APP STORES**
+
+A comprehensive compliance audit has identified **5 critical blockers** that will cause immediate rejection from Apple App Store and Google Play. The app requires **3-5 days of fixes** before submission.
+
+**📋 For All Team Members:**  
+**→ START HERE: [COMPLIANCE_AUDIT_README.md](COMPLIANCE_AUDIT_README.md)**
+
+**Quick Links by Role:**
+- **Executives/PMs:** [Executive Summary](COMPLIANCE_EXECUTIVE_SUMMARY.md) (5-min read)
+- **Developers:** [Fixes Checklist](COMPLIANCE_FIXES_CHECKLIST.md) (actionable tasks)
+- **Legal/Compliance:** [Full Audit Report](COMPLIANCE_AUDIT_REPORT.md) (detailed analysis)
+
+**Key Issues:**
+1. ❌ Missing privacy policy URL (100% rejection)
+2. ❌ Unnecessary iOS background location permission (100% rejection)
+3. ❌ No data deletion mechanism (95% rejection)
+4. ❌ Missing phone number consent (85% rejection)
+5. ❌ Misleading emergency services claims (90% rejection)
+
+**Timeline:** 3-5 days to fix → 4-6 weeks to approval
+
+---
+
 ## Setup
 
 ### 1. Install Dependencies
