@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/profile_service.dart';
+import '../constants/app_constants.dart';
 
 /// State notifier for managing active SOS alerts
 /// This provider manages the list of active emergency alerts received via FCM
 class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   Timer? _cleanupTimer;
+  Timer? _expiryTimer;
   
   ActiveAlertsNotifier() : super([]) {
     // Schedule async loading to avoid modifying state during construction
@@ -20,7 +22,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   }
 
   static const String _alertsKey = 'active_alerts';
-  static const double _alertTTLHours = 1.5; // 1.5 hours
+  static const Duration _alertTtl = AppConstants.alertTtl;
   static const Duration _cleanupInterval = Duration(minutes: 5); // Check every 5 minutes
 
   /// Start automatic background cleanup timer
@@ -35,7 +37,56 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   @override
   void dispose() {
     _cleanupTimer?.cancel();
+    _expiryTimer?.cancel();
     super.dispose();
+  }
+
+  int _parseTimestampMillis(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is num) return value.toInt();
+    if (value is String) {
+      final parsedInt = int.tryParse(value);
+      if (parsedInt != null) return parsedInt;
+      final parsedDouble = double.tryParse(value);
+      if (parsedDouble != null) return parsedDouble.toInt();
+    }
+    return 0;
+  }
+
+  void _scheduleNextExpiry() {
+    _expiryTimer?.cancel();
+    if (state.isEmpty) {
+      return;
+    }
+
+    final nowMillis = DateTime.now().millisecondsSinceEpoch;
+    int? nextExpiryMillis;
+
+    for (final alert in state) {
+      final timestampMillis = _parseTimestampMillis(alert['timestamp']);
+      final expiresAt = timestampMillis + _alertTtl.inMilliseconds;
+
+      if (expiresAt <= nowMillis) {
+        nextExpiryMillis = nowMillis;
+        break;
+      }
+
+      if (nextExpiryMillis == null || expiresAt < nextExpiryMillis) {
+        nextExpiryMillis = expiresAt;
+      }
+    }
+
+    if (nextExpiryMillis == null) {
+      return;
+    }
+
+    final delayMillis = nextExpiryMillis - nowMillis;
+    final delay = Duration(milliseconds: delayMillis > 0 ? delayMillis : 0);
+    _expiryTimer = Timer(delay, () {
+      removeExpiredAlerts();
+    });
   }
 
   /// Load alerts from SharedPreferences on app start
@@ -61,7 +112,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       for (final alertJson in alertsJson) {
         try {
           final alert = jsonDecode(alertJson) as Map<String, dynamic>;
-          final alertTimestamp = alert['timestamp'] as int? ?? 0;
+          final alertTimestamp = _parseTimestampMillis(alert['timestamp']);
           final alertSosId = alert['sos_id'] as String?;
           
           // Skip user's own alerts
@@ -72,7 +123,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
           // Check if alert is within TTL (Time To Live)
           final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
           
-          if (alertAge.inMinutes < (_alertTTLHours * 60)) {
+          if (alertAge < _alertTtl) {
             validAlerts.add(alert);
           }
         } catch (e) {
@@ -81,10 +132,12 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       }
       
       state = validAlerts;
+      _scheduleNextExpiry();
     } catch (e) {
       // Handle any errors during loading gracefully
       debugPrint('Failed to load stored alerts: $e');
       state = [];
+      _scheduleNextExpiry();
     }
   }
 
@@ -127,6 +180,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     // Add alert to the beginning of the list (newest first)
     state = [alert, ...state];
     await _saveAlertsToStorage();
+    _scheduleNextExpiry();
   }
 
   /// Remove a specific alert by SOS ID
@@ -134,12 +188,14 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   Future<void> removeAlert(String sosId) async {
     state = state.where((alert) => alert['sos_id'] != sosId).toList();
     await _saveAlertsToStorage();
+    _scheduleNextExpiry();
   }
 
   /// Clear all alerts (debug-only action in UI)
   Future<void> clearAllAlerts() async {
     state = [];
     await _saveAlertsToStorage();
+    _scheduleNextExpiry();
   }
 
   /// Force reload alerts from SharedPreferences
@@ -158,6 +214,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       return alert;
     }).toList();
     await _saveAlertsToStorage();
+    _scheduleNextExpiry();
   }
 
   /// Automatically remove expired alerts
@@ -167,11 +224,9 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     final initialCount = state.length;
     
     state = state.where((alert) {
-      final alertTimestamp = alert['timestamp'] as int? ?? 0;
+      final alertTimestamp = _parseTimestampMillis(alert['timestamp']);
       final alertAge = Duration(milliseconds: currentTime - alertTimestamp);
-      final ageInMinutes = alertAge.inMinutes;
-      final ttlMinutes = _alertTTLHours * 60;
-      final isValid = ageInMinutes < ttlMinutes;
+      final isValid = alertAge < _alertTtl;
       
       return isValid;
     }).toList();
@@ -180,6 +235,7 @@ class ActiveAlertsNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     if (state.length != initialCount) {
       await _saveAlertsToStorage();
     }
+    _scheduleNextExpiry();
   }
 
 }

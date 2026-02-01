@@ -18,6 +18,9 @@ class AppConstants {
   static const double primaryButtonHeight = 64.0; // Primary button height
   static const double cardBorderRadius = 12.0;
 
+  // Alert/SOS expiration settings
+  static const Duration alertTtl = Duration(minutes: 60);
+
   // Legacy constants for compatibility
   static const double defaultPadding = screenMargins;
 }

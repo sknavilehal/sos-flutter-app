@@ -70,6 +70,14 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
       return null;
     }
   }
+  
+  String _formatDistanceRange(double distance) {
+    // Calculate range by adding 10 km buffer
+    final lowerBound = distance.round();
+    final upperBound = (distance + 8).round();
+    
+    return 'Approx $lowerBound–$upperBound km away';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,8 +146,8 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
     final alertTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
     final timeAgo = _formatTimeAgo(DateTime.now().difference(alertTime));
     
-    // Format distance display
-    final distanceText = distance != null ? '${distance}km away' : 'Distance unknown';
+    // Format distance display as a range
+    final distanceText = distance != null ? _formatDistanceRange(distance) : 'Distance unknown';
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

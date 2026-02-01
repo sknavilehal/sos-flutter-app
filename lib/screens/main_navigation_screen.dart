@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/app_theme.dart';
 import '../core/providers/alerts_provider.dart';
+import '../core/providers/sos_state_provider.dart';
 import '../widgets/rrt_screen_layout.dart';
 import 'home_screen.dart';
 import 'alerts_screen.dart';
@@ -47,6 +48,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> wit
           await ref.read(activeAlertsProvider.notifier).refreshFromStorage();
         } catch (e) {
           debugPrint('Error refreshing alerts from storage: $e');
+        }
+        try {
+          await ref.read(sosStateProvider.notifier).refreshFromStorage();
+        } catch (e) {
+          debugPrint('Error refreshing SOS state from storage: $e');
         }
       });
     }
