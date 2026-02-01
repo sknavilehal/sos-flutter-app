@@ -96,47 +96,4 @@ class _HelpScreenState extends State<HelpScreen> {
       ),
     );
   }
-
-  Widget _buildReportIssueButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(0),
-        border: Border.all(color: AppTheme.primaryBlack, width: 2),
-      ),
-      child: InkWell(
-        onTap: () {
-          // Functionality not implemented yet as per requirements
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Report Issue feature coming soon'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.bug_report_outlined,
-              size: 20,
-              color: AppTheme.primaryBlack,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'REPORT ISSUE',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlack,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

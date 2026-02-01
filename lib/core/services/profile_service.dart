@@ -6,7 +6,7 @@ class ProfileService {
   static const String _nameKey = 'user_name';
   static const String _mobileKey = 'user_mobile';
   static const String _termsAcceptedKey = 'terms_accepted';
-  static const String _userIdKey = 'user_unique_id';
+  static const String _userIdKey = 'user_id';
   
   static const Uuid _uuid = Uuid();
 

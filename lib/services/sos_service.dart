@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../core/config/api_config.dart';
-import 'user_id_service.dart';
+import '../core/services/profile_service.dart';
+
 /// Abstract SOS service interface for handling alert operations
 abstract class SOSService {
   /// Send SOS alert to backend
@@ -32,7 +33,7 @@ class HTTPSOSService implements SOSService {
   }) async {
     try {
       // Get unique user ID for self-filtering
-      final senderId = await UserIdService.getUserId();
+      final senderId = await ProfileService.getUserId();
       
       final sosData = {
         'sos_id': sosId,

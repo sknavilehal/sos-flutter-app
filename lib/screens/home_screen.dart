@@ -988,7 +988,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with AutomaticKeepAlive
 
       // Generate unique SOS ID based on stable user ID
       final userId = await ProfileService.getUserId();
-      final sosId = 'sos_${userId}';
+      final sosId = 'sos_$userId';
 
       // Get user profile data for emergency contact info
       final userName = await ProfileService.getUserName() ?? 'Emergency Contact';

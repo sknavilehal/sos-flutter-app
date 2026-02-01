@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
-import '../core/constants/app_constants.dart';
 import '../widgets/rrt_screen_layout.dart';
 import '../widgets/onboarding_flow_bottom_bar.dart';
 
@@ -116,35 +115,6 @@ class _HowToUseScreenState extends State<HowToUseScreen> {
         label: 'CLOSE',
         onTap: () => Navigator.pop(context),
       ),
-    );
-  }
-
-  Widget _buildSection(String title, String? description) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryBlack,
-            letterSpacing: 0.3,
-          ),
-        ),
-        if (description != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            description,
-            textAlign: TextAlign.justify,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: AppTheme.neutralGrey,
-              height: 1.6,
-            ),
-          ),
-        ],
-      ],
     );
   }
 

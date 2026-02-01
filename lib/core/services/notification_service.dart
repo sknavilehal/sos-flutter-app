@@ -5,7 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/alerts_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/user_id_service.dart';
+import 'profile_service.dart';
 
 /// Service for handling FCM notifications and navigation
 /// Manages how the app responds to incoming push notifications
@@ -14,7 +14,6 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  static GlobalKey<NavigatorState>? _navigatorKey;
   static WidgetRef? _ref;
   static bool _initialized = false;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
@@ -22,7 +21,6 @@ class NotificationService {
   /// Initialize the notification service with navigation key and Riverpod ref
   /// Called from main.dart to set up navigation and state management access
   static Future<void> initialize(GlobalKey<NavigatorState> navigatorKey, WidgetRef ref) async {
-    _navigatorKey = navigatorKey;
     _ref = ref;
     
     if (!_initialized) {
@@ -108,7 +106,7 @@ class NotificationService {
     // ✅ Client-side filtering: Check if this is a self-sent SOS alert
     final messageSenderId = message.data['sender_id'];
     if (messageSenderId != null) {
-      final currentUserId = await UserIdService.getUserId();
+      final currentUserId = await ProfileService.getUserId();
       
       if (messageSenderId == currentUserId) {
         // Filter out self-sent notifications
@@ -300,7 +298,7 @@ class NotificationService {
         // Check for sender filtering
         final messageSenderId = message.data['sender_id'];
         if (messageSenderId != null) {
-          final currentUserId = await UserIdService.getUserId();
+          final currentUserId = await ProfileService.getUserId();
           
           if (messageSenderId == currentUserId) {
             return;

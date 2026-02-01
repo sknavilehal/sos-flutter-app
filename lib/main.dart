@@ -24,7 +24,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final messageSenderId = message.data['sender_id'];
   if (messageSenderId != null) {
     try {
-      // Use SharedPreferences directly since we can't use UserIdService in background
+      // Use SharedPreferences directly since we can't use ProfileService in background
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('user_id');
       
